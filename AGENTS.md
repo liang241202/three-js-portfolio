@@ -36,5 +36,5 @@ npm run preview  # 預覽 build 結果
 - [ ] 遷移完成後 Tier 3 knowledge capture → `~/AI_workspace/projects/three-js-portfolio/`
 
 ## Workflow
-全域規則見 `~/.claude/CLAUDE.md` 與 `~/AI_workspace/workflows/dual-agent-workflow.md`。
+全域規則見 `~/.Codex/AGENTS.md` 與 `~/AI_workspace/workflows/dual-agent-workflow.md`。
 **本檔僅補充專案特異資訊，不重複全域規則。**

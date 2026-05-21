@@ -1,5 +1,16 @@
-node_modules/
+﻿node_modules/
 dist/
 .DS_Store
 .env
 .env.local
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Claude Code local-only (per Phase 3 errata §0.5.3)
+.claude/settings.local.json
+
+# misc
+*.log
