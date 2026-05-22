@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 .DS_Store
 .env
@@ -14,3 +14,10 @@ out/
 
 # misc
 *.log
+
+# additions from create-next-app scaffold (WBS-2)
+# (already-covered entries omitted; next-env.d.ts intentionally NOT ignored per errata §0.5.4)
+/coverage
+/build
+*.pem
+*.tsbuildinfo
