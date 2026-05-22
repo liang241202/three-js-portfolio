@@ -1,14 +1,24 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Group } from "three";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import Terrain from "./Terrain";
+import Ball from "@/src/character/Ball";
 
 export default function SceneRoot() {
   const rigRef = useRef<CameraRigHandle>(null);
-  const [groundGroup, setGroundGroup] = useState<Group | null>(null);
+
+  // Dual-write: ref for sync access (Ball useFrame),
+  // state for re-render trigger (CameraRig Box3 fit).
+  const terrainRef = useRef<Group | null>(null);
+  const [terrainMounted, setTerrainMounted] = useState<Group | null>(null);
+
+  const setTerrain = useCallback((g: Group | null) => {
+    terrainRef.current = g;
+    setTerrainMounted(g);
+  }, []);
 
   return (
     <Canvas
@@ -19,12 +29,13 @@ export default function SceneRoot() {
       <directionalLight intensity={1} position={[5, 10, 7.5]} />
       <ambientLight intensity={0.3} />
 
-      {/* CameraRig now has a real fitTarget; Box3 fit will activate after Terrain mounts */}
-      <CameraRig ref={rigRef} fitTarget={groundGroup} />
+      <CameraRig ref={rigRef} fitTarget={terrainMounted} />
 
-      <group ref={setGroundGroup}>
+      <group ref={setTerrain}>
         <Terrain rows={10} cols={10} size={1} />
       </group>
+
+      <Ball terrainRef={terrainRef} />
     </Canvas>
   );
 }
