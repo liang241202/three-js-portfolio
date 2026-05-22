@@ -3,6 +3,10 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import { Box3, Group, Object3D, PerspectiveCamera, Vector3 } from "three";
+import { useOrbitInertia } from "@/src/controls/useOrbitInertia";
+import { usePan } from "@/src/controls/usePan";
+import { useZoom } from "@/src/controls/useZoom";
+import { useResetView } from "@/src/controls/useResetView";
 
 export type CameraRigHandle = {
   pivot: Group;
@@ -17,14 +21,17 @@ const CameraRig = forwardRef<CameraRigHandle, Props>(function CameraRig(
   { fitTarget, distanceMultiplier = 2 },
   ref,
 ) {
-  const pivotRef = useRef<Group>(null!);
+  const pivotRef = useRef<Group | null>(null);
+  // Shared drag signal: useOrbitInertia writes, useResetView reads to cancel
+  // an in-progress R-reset (mirrors src/main.js:92-93).
+  const draggingRef = useRef(false);
   const { camera } = useThree();
 
   useImperativeHandle(
     ref,
     () => ({
       get pivot() {
-        return pivotRef.current;
+        return pivotRef.current as Group;
       },
     }),
     [],
@@ -55,6 +62,12 @@ const CameraRig = forwardRef<CameraRigHandle, Props>(function CameraRig(
     camera.lookAt(center);
     camera.updateProjectionMatrix();
   }, [fitTarget, camera, distanceMultiplier]);
+
+  // WBS-7: pivot-affecting hooks
+  useOrbitInertia(pivotRef, draggingRef);
+  usePan(pivotRef);
+  useZoom(pivotRef);
+  useResetView(pivotRef, draggingRef);
 
   return <group ref={pivotRef} />;
 });

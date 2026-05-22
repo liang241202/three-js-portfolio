@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, Raycaster, Vector3 } from "three";
+import { useWASD } from "@/src/controls/useWASD";
 
 // Mirror src/main.js:37-42 - raycaster + downward vector + float offset
 const FLOAT_OFFSET = 0.5;
@@ -23,13 +24,13 @@ type Props = {
 };
 
 export default function Ball({ terrainRef, initialPosition = [0, 2, 0] }: Props) {
-  const meshRef = useRef<Mesh>(null!);
+  const meshRef = useRef<Mesh | null>(null);
   const raycaster = useRef(new Raycaster()).current;
   const floatTime = useRef(0);
   const lastGroundY = useRef(0);
   const origin = useRef(new Vector3());
 
-  // Mirror src/main.js:196-220 updateFloatingCharacter, driven by R3F useFrame
+  // Mirror src/main.js:190 - floating-character update FIRST in animate()
   useFrame((_, delta) => {
     const mesh = meshRef.current;
     const terrain = terrainRef.current;
@@ -57,6 +58,11 @@ export default function Ball({ terrainRef, initialPosition = [0, 2, 0] }: Props)
       lastGroundY.current = maxGroundY;
     }
   });
+
+  // Mirror src/main.js:191 - character movement SECOND in animate().
+  // Registering useWASD after the floating useFrame keeps R3F invoke order
+  // aligned with the original animate() sequence.
+  useWASD(meshRef, terrainRef);
 
   // Mirror src/main.js:29-35 - SphereGeometry(0.3, 16, 16), MeshStandardMaterial color 0xff7788, castShadow
   return (
