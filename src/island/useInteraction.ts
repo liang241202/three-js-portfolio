@@ -1,12 +1,13 @@
 "use client";
 
 import type { RefObject } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Mesh } from "three";
 import type { PortfolioCard } from "@/src/island/types";
 import { getIslandObject } from "@/src/island/data/objects";
 import { getPortfolioCard } from "@/src/island/data/cards";
 import { computeTeleportLanding } from "@/src/island/data/travel";
+import { findNearestObjectId } from "@/src/island/useNearestObject";
 
 export type UseInteraction = {
   /** Stable callback for InteractionDriver to report the nearest object id. */
@@ -33,10 +34,11 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
 
   const panelOpen = openCardId !== null || travelOpen;
 
-  // Mirror "a panel is open" into a ref for useWASD's frame loop. Written in an effect
-  // (not during render) per the react-hooks/refs rule; a one-frame lag is irrelevant.
+  // Mirror "a panel is open" into a ref for useWASD's frame loop. Written in a layout effect
+  // (not during render, per react-hooks/refs) so the pause is committed before the next
+  // animation frame — WASD never advances a frame after a panel opens.
   const pausedRef = useRef(false);
-  useEffect(() => {
+  useLayoutEffect(() => {
     pausedRef.current = panelOpen;
   }, [panelOpen]);
 
@@ -51,6 +53,9 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
       if (target && mesh) {
         const [x, y, z] = computeTeleportLanding(target);
         mesh.position.set(x, y, z);
+        // Sync nearest to the landing point now, so it isn't stale (center-temple) until the
+        // throttled driver re-samples — otherwise a fast E could reopen travel (Codex review).
+        setNearestObjectId(findNearestObjectId(x, z));
       }
       // Close panel after selecting; teleport does NOT auto-open the destination card (spec §10.1).
       setTravelOpen(false);
