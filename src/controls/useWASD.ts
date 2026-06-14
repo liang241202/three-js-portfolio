@@ -3,12 +3,13 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Raycaster, Vector3 } from "three";
-import type { CharacterRef, TerrainRef } from "./types";
+import type { CharacterRef, PausedRef, TerrainRef } from "./types";
+import { isInsideIsland } from "@/src/island/useIslandBoundary";
 
 const MOVE_SPEED = 2;
 const DOWN = new Vector3(0, -1, 0);
 
-export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef) {
+export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef, pausedRef?: PausedRef) {
   const { camera } = useThree();
   const move = useRef({ forward: false, backward: false, left: false, right: false });
   const raycaster = useRef(new Raycaster()).current;
@@ -35,6 +36,9 @@ export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef) {
   }, []);
 
   useFrame((_, delta) => {
+    // Movement pauses while a card / quick-travel panel is open (spec §10 rule 11).
+    if (pausedRef?.current) return;
+
     const char = characterRef.current;
     const terrain = terrainRef.current;
     if (!char || !terrain) return;
@@ -54,6 +58,11 @@ export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef) {
     moveVector.normalize().multiplyScalar(MOVE_SPEED * delta);
 
     const futurePosition = char.position.clone().add(moveVector);
+
+    // Island boundary: reject moves that would leave the walkable ellipse (spec §11).
+    // The terrain raycast gate below stays as a backstop for plateau/peak edges.
+    if (!isInsideIsland(futurePosition.x, futurePosition.z)) return;
+
     const rayOrigin = futurePosition.clone().add(new Vector3(0, 1, 0));
     raycaster.set(rayOrigin, DOWN);
     const hit = raycaster.intersectObjects(terrain.children, true);

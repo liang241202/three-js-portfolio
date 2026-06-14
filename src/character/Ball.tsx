@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, Raycaster, Vector3 } from "three";
 import { useWASD } from "@/src/controls/useWASD";
+import type { PausedRef } from "@/src/controls/types";
 
 // Mirror src/main.js:37-42 - raycaster + downward vector + float offset
 const FLOAT_OFFSET = 0.5;
@@ -19,12 +20,20 @@ const SAMPLE_OFFSETS: Vector3[] = [
 ];
 
 type Props = {
+  /** Lifted to SceneRoot so proximity detection and quick-travel can read/write the character. */
+  characterRef: React.RefObject<Mesh | null>;
   terrainRef: React.RefObject<Group | null>;
+  pausedRef?: PausedRef;
   initialPosition?: [number, number, number];
 };
 
-export default function Ball({ terrainRef, initialPosition = [0, 2, 0] }: Props) {
-  const meshRef = useRef<Mesh | null>(null);
+export default function Ball({
+  characterRef,
+  terrainRef,
+  pausedRef,
+  initialPosition = [0, 2, 3],
+}: Props) {
+  const meshRef = characterRef;
   const raycaster = useRef(new Raycaster()).current;
   const floatTime = useRef(0);
   const lastGroundY = useRef(0);
@@ -62,7 +71,7 @@ export default function Ball({ terrainRef, initialPosition = [0, 2, 0] }: Props)
   // Mirror src/main.js:191 - character movement SECOND in animate().
   // Registering useWASD after the floating useFrame keeps R3F invoke order
   // aligned with the original animate() sequence.
-  useWASD(meshRef, terrainRef);
+  useWASD(meshRef, terrainRef, pausedRef);
 
   // Mirror src/main.js:29-35 - SphereGeometry(0.3, 16, 16), MeshStandardMaterial color 0xff7788, castShadow
   return (
