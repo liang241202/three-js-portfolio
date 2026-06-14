@@ -31,7 +31,9 @@ export default function Ball({
   characterRef,
   terrainRef,
   pausedRef,
-  initialPosition = [0, 2, 3],
+  // Spawn x,z scaled with the 1.5x world (south open ground); y unchanged because the terrain is
+  // widened non-uniformly (height kept at 1x), so vertical behavior is identical (Gate A 2026-06-14).
+  initialPosition = [0, 2, 4.5],
 }: Props) {
   const meshRef = characterRef;
   const raycaster = useRef(new Raycaster()).current;

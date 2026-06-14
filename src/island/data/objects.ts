@@ -1,12 +1,18 @@
 import type { IslandObject } from "@/src/island/types";
+import { OBJECT_SCALE, WORLD_SCALE } from "@/src/island/layout";
 
 // Island Interaction Slice v1 object registry (spec §7 — ids are FIXED, do not rename).
-// Positions: pentagon ring radius 3.3 on the existing 10x10 terrain (x,z in [-4.5,4.5]).
+// Base layout is authored at WORLD_SCALE = 1: pentagon ring radius 3.3 on the 10x10 terrain.
 // Vertex angles 90 / 90+/-72 / 90+/-144, mapped x = r*cos(theta), z = -r*sin(theta) (north = -z),
-// so contact-beacon sits north. y is the ground-anchor; InteractableObject offsets meshes upward.
-const INTERACT_RADIUS = 1.5;
+// so contact-beacon sits north. scaleObject() below spreads x,z by WORLD_SCALE so the objects
+// sit farther apart, and gives visuals a gentle OBJECT_SCALE boost.
+//
+// position.y is a hand-tuned ground anchor (terrain-height dependent) and is intentionally NOT
+// scaled — every base y below is already the final world y for the current terrain.
+const INTERACT_RADIUS = 1.5; // NOT scaled with the world (Gate A 2026-06-14): objects spread
+// apart but keep their original interaction reach, so adjacent interaction radii stay distinct.
 
-export const islandObjects: IslandObject[] = [
+const baseObjects: IslandObject[] = [
   {
     id: "contact-beacon",
     kind: "contact",
@@ -56,12 +62,31 @@ export const islandObjects: IslandObject[] = [
     id: "center-temple",
     kind: "utility",
     label: "Temple",
+    // y stays 1 (original): terrain is widened non-uniformly with height kept at 1x, so the central
+    // peak is the same height as before and the temple sits on it unchanged.
     position: [0, 1, 0],
     radius: INTERACT_RADIUS,
     visual: { primitive: "box", color: "#bfae8e", scale: [1.6, 1.6, 1.6] },
     interaction: { prompt: "Press E to travel", action: "open-travel" },
   },
 ];
+
+// Spread positions by WORLD_SCALE (x,z only — y is a ground anchor) and give visuals a gentle,
+// non-proportional OBJECT_SCALE boost. ids/kind/interaction pass through frozen (spec §7 contract).
+function scaleObject(o: IslandObject): IslandObject {
+  const [x, y, z] = o.position;
+  const s = o.visual.scale;
+  return {
+    ...o,
+    position: [x * WORLD_SCALE, y, z * WORLD_SCALE],
+    visual: {
+      ...o.visual,
+      scale: s ? [s[0] * OBJECT_SCALE, s[1] * OBJECT_SCALE, s[2] * OBJECT_SCALE] : s,
+    },
+  };
+}
+
+export const islandObjects: IslandObject[] = baseObjects.map(scaleObject);
 
 export function getIslandObject(id: string): IslandObject | undefined {
   return islandObjects.find((o) => o.id === id);
