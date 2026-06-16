@@ -21,6 +21,11 @@ function maxOutwardOffset(x: number, z: number, ux: number, uz: number): number 
   const b = (2 * x * ux) / ax2 + (2 * z * uz) / az2;
   const c = (x * x) / ax2 + (z * z) / az2 - 1;
   if (a < 1e-9) return 0;
+  // c is the point's signed position vs the ellipse (<0 inside, >=0 on/outside). The "+sqrt" root
+  // below is the outward boundary distance only when the point is strictly inside; on/outside it
+  // would push the landing past the far edge, so refuse any outward offset there. (All v1 objects
+  // sit inside, so this never triggers today — it guards a future object placed on/outside.)
+  if (c >= 0) return 0;
   const disc = b * b - 4 * a * c;
   if (disc <= 0) return 0;
   return (-b + Math.sqrt(disc)) / (2 * a);
