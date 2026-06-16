@@ -62,13 +62,14 @@ const baseObjects: IslandObject[] = [
     id: "center-temple",
     kind: "utility",
     label: "Temple",
-    // y re-seated to 1.5 (was 1): the temple sits flush on the PLATEAU, not the peak. The terrain
-    // is now scaled uniformly by WORLD_SCALE, so the plateau top rose 1.0 -> 1.5. The temple is a
-    // sibling (not scaled), so its base is lifted by that same +0.5 delta to stay flush on the
-    // plateau surface — no floating gap for the Ball to walk under. (An earlier pass used the
-    // peak's +1.0 delta by mistake, which left the base hovering 0.5 above the plateau.) The
-    // central peak cube still pokes up through one corner as before. Hand-tuned, terrain-height
-    // dependent; interaction is XZ-only (useNearestObject) so this y is purely visual.
+    // y re-seated to 1.5 (was 1): the temple sits flush on the PLATEAU. The terrain is now scaled
+    // uniformly by WORLD_SCALE, so the plateau top rose 1.0 -> 1.5. The temple is a sibling (not
+    // scaled), so its base is lifted by that same +0.5 delta to stay flush on the plateau surface —
+    // no floating gap for the Ball to walk under. (An earlier pass used the central peak's +1.0
+    // delta by mistake, which left the base hovering 0.5 above the plateau; that lone peak has
+    // since been removed in Terrain.tsx, so the plateau under the temple is flat.) Hand-tuned,
+    // terrain-height dependent; interaction is XZ-only (useNearestObject) so this y is purely
+    // visual, but the base top IS the Ball's walkable floor — see TempleFloorCollider.
     position: [0, 1.5, 0],
     radius: INTERACT_RADIUS,
     visual: { primitive: "box", color: "#bfae8e", scale: [1.6, 1.6, 1.6] },
