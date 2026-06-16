@@ -7,6 +7,7 @@ import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import Terrain from "./Terrain";
 import Ball from "@/src/character/Ball";
 import IslandObjects from "@/src/island/IslandObjects";
+import TempleFloorCollider from "@/src/island/TempleFloorCollider";
 import InteractionDriver from "@/src/island/InteractionDriver";
 import { useInteraction } from "@/src/island/useInteraction";
 import { travelDestinations } from "@/src/island/data/travel";
@@ -30,6 +31,10 @@ export default function SceneRoot() {
 
   // Lifted from Ball so proximity detection and quick-travel can read/write the character.
   const characterRef = useRef<Mesh | null>(null);
+
+  // Invisible walk-collider over the temple base; the Ball raycasts it (alongside the terrain) so it
+  // climbs onto the temple floor / rune pad instead of clipping through it.
+  const walkColliderRef = useRef<Group | null>(null);
 
   const {
     onNearestChange,
@@ -70,7 +75,14 @@ export default function SceneRoot() {
 
         <IslandObjects />
 
-        <Ball characterRef={characterRef} terrainRef={terrainRef} pausedRef={pausedRef} />
+        <TempleFloorCollider ref={walkColliderRef} />
+
+        <Ball
+          characterRef={characterRef}
+          terrainRef={terrainRef}
+          pausedRef={pausedRef}
+          walkColliderRef={walkColliderRef}
+        />
 
         <InteractionDriver characterRef={characterRef} onNearestChange={onNearestChange} />
       </Canvas>

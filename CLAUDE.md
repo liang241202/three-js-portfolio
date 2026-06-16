@@ -17,7 +17,7 @@
 - `app/page.tsx` - RSC home page; mounts `<SceneRoot />` inside full-viewport `<main>`
 - `src/scene/SceneRoot.tsx` - only app-level client boundary; owns `<Canvas>` composition
 - `src/scene/CameraRig.tsx` - perspective camera, pivot group, Box3 fit, orbit/pan/zoom/reset hooks
-- `src/scene/Terrain.tsx` - memoized 10x10 cube grid with plateau and peak
+- `src/scene/Terrain.tsx` - memoized 10x10 cube grid with a raised central plateau
 - `src/character/Ball.tsx` - sphere character, 5-point raycast height tracking, WASD movement
 - `src/controls/` - custom control hooks and shared ref types
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Raycaster, Vector3 } from "three";
-import type { CharacterRef, PausedRef, TerrainRef } from "./types";
+import type { CharacterRef, PausedRef, TerrainRef, WalkColliderRef } from "./types";
 import { isInsideIsland } from "@/src/island/useIslandBoundary";
 import { WORLD_SCALE } from "@/src/island/layout";
 
@@ -19,7 +19,12 @@ const DOWN = new Vector3(0, -1, 0);
 const CLIMB_PROBE = new Vector3(0, WORLD_SCALE, 0);
 const CLIMB_CLEARANCE = 0.3;
 
-export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef, pausedRef?: PausedRef) {
+export function useWASD(
+  characterRef: CharacterRef,
+  terrainRef: TerrainRef,
+  pausedRef?: PausedRef,
+  walkColliderRef?: WalkColliderRef,
+) {
   const { camera } = useThree();
   const move = useRef({ forward: false, backward: false, left: false, right: false });
   const raycaster = useRef(new Raycaster()).current;
@@ -75,7 +80,11 @@ export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef, paus
 
     const rayOrigin = futurePosition.clone().add(CLIMB_PROBE);
     raycaster.set(rayOrigin, DOWN);
-    const hit = raycaster.intersectObjects(terrain.children, true);
+    // Include the temple walk-collider (outside the terrain group) so the gate lets the Ball step
+    // up onto the temple base instead of treating its drawn floor as empty air.
+    const collider = walkColliderRef?.current;
+    const targets = collider ? terrain.children.concat(collider) : terrain.children;
+    const hit = raycaster.intersectObjects(targets, true);
     if (hit.length > 0) {
       const dist = rayOrigin.y - hit[0].point.y;
       if (dist > CLIMB_CLEARANCE) {

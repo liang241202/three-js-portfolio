@@ -2,6 +2,7 @@
 
 import type { JSX } from "react";
 import type { IslandObject } from "@/src/island/types";
+import { TEMPLE_BASE } from "@/src/island/templeBase";
 
 type Props = {
   object: IslandObject;
@@ -112,11 +113,12 @@ function renderBlockout(object: IslandObject): JSX.Element {
         </group>
       );
     case "center-temple":
-      // Blocky temple / portal plaza with a glowing rune pad (utility hub).
+      // Blocky temple / portal plaza with a glowing rune pad (utility hub). The base slab geometry
+      // is shared with TempleFloorCollider (TEMPLE_BASE) so the Ball's walkable floor matches it.
       return (
         <group>
-          <mesh position={[0, 0.15, 0]} castShadow>
-            <boxGeometry args={[1.6, 0.3, 1.6]} />
+          <mesh position={[0, TEMPLE_BASE.localY, 0]} castShadow>
+            <boxGeometry args={[TEMPLE_BASE.width, TEMPLE_BASE.height, TEMPLE_BASE.width]} />
             <meshStandardMaterial color={c} />
           </mesh>
           <mesh position={[0, 0.32, 0]}>

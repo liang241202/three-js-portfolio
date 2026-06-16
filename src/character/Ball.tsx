@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, Raycaster, Vector3 } from "three";
 import { useWASD } from "@/src/controls/useWASD";
-import type { PausedRef } from "@/src/controls/types";
+import type { PausedRef, WalkColliderRef } from "@/src/controls/types";
 import { WORLD_SCALE } from "@/src/island/layout";
 
 // Mirror src/main.js:37-42 - raycaster + downward vector + float offset
@@ -33,6 +33,9 @@ type Props = {
   characterRef: React.RefObject<Mesh | null>;
   terrainRef: React.RefObject<Group | null>;
   pausedRef?: PausedRef;
+  /** Invisible temple-floor collider; raycast alongside the terrain so the Ball stands on the
+   *  temple base instead of clipping through it. */
+  walkColliderRef?: WalkColliderRef;
   initialPosition?: [number, number, number];
 };
 
@@ -40,6 +43,7 @@ export default function Ball({
   characterRef,
   terrainRef,
   pausedRef,
+  walkColliderRef,
   // Spawn x,z scaled with the 1.5x world (south open ground); y unchanged because the base-ground
   // top stays at world y=0 under uniform WORLD_SCALE (base cube: -0.5*s + 0.5*s = 0), so the Ball
   // still settles to its float offset there (Gate A 2026-06-16).
@@ -59,11 +63,16 @@ export default function Ball({
 
     floatTime.current += delta;
 
+    // Probe the terrain plus the temple walk-collider (a sibling of the terrain group), so the Ball
+    // floats on the temple base/rune pad instead of sinking through it. Built once per frame.
+    const collider = walkColliderRef?.current;
+    const targets = collider ? terrain.children.concat(collider) : terrain.children;
+
     let maxGroundY = -Infinity;
     for (const off of SAMPLE_OFFSETS) {
       origin.current.copy(mesh.position).add(off);
       raycaster.set(origin.current, DOWN);
-      const hits = raycaster.intersectObjects(terrain.children, true);
+      const hits = raycaster.intersectObjects(targets, true);
       if (hits.length > 0) {
         maxGroundY = Math.max(maxGroundY, hits[0].point.y);
       }
@@ -83,7 +92,7 @@ export default function Ball({
   // Mirror src/main.js:191 - character movement SECOND in animate().
   // Registering useWASD after the floating useFrame keeps R3F invoke order
   // aligned with the original animate() sequence.
-  useWASD(meshRef, terrainRef, pausedRef);
+  useWASD(meshRef, terrainRef, pausedRef, walkColliderRef);
 
   // Mirror src/main.js:29-35 - SphereGeometry(0.3, 16, 16), MeshStandardMaterial color 0xff7788, castShadow
   return (

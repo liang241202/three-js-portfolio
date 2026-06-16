@@ -5,6 +5,10 @@ export type PivotRef = RefObject<Group | null>;
 export type CharacterRef = RefObject<Mesh | null>;
 export type TerrainRef = RefObject<Group | null>;
 
+// Extra raycast target for the float probe / climb gate: an invisible collision group (currently
+// the temple base) the Ball can stand on even though it lives outside the terrain group.
+export type WalkColliderRef = RefObject<Group | null>;
+
 // Mirrors "an interaction panel is open". useWASD reads it each frame to pause
 // movement without re-registering its frame callback.
 export type PausedRef = RefObject<boolean>;

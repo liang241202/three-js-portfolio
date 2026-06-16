@@ -22,7 +22,10 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
         const color = isDark ? 0x9fc5e8 : 0xcfe2f3;
         let height = 0;
         if (i >= 3 && i <= 6 && j >= 3 && j <= 6) height = 1;
-        if (i === 5 && j === 5) height = 2;
+        // The legacy lone peak (i===5 && j===5 -> height 2) was dropped 2026-06-16: it sits hidden
+        // under the temple, and a cube taller than the temple's walkable floor would poke through it
+        // and fight the TempleFloorCollider (the Ball would jitter up onto the stub). The temple
+        // floor is now the island's central high point.
         items.push({
           key: `${i}-${j}`,
           pos: [
