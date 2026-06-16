@@ -13,7 +13,8 @@ const FLOAT_OFFSET = 0.5;
 const BOUNDARY_MARGIN = 0.3;
 
 // Distance from (x,z) along outward unit vector (ux,uz) to the walkable ellipse boundary
-// (positive root of the ray/ellipse intersection). Returns 0 if already outside or degenerate.
+// (positive root of the ray/ellipse intersection). Returns 0 if the point is on/outside the
+// ellipse (c >= 0) or the ray is degenerate.
 function maxOutwardOffset(x: number, z: number, ux: number, uz: number): number {
   const ax2 = ISLAND_SEMI_AXIS_X * ISLAND_SEMI_AXIS_X;
   const az2 = ISLAND_SEMI_AXIS_Z * ISLAND_SEMI_AXIS_Z;
