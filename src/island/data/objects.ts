@@ -62,9 +62,11 @@ const baseObjects: IslandObject[] = [
     id: "center-temple",
     kind: "utility",
     label: "Temple",
-    // y stays 1 (original): terrain is widened non-uniformly with height kept at 1x, so the central
-    // peak is the same height as before and the temple sits on it unchanged.
-    position: [0, 1, 0],
+    // y re-seated to 2 (was 1): the terrain is now scaled uniformly by WORLD_SCALE, so the central
+    // peak top rose 2.0 -> 3.0. The temple is a sibling (not scaled), so it is lifted by the same
+    // delta to keep the same seating on the peak. Hand-tuned, terrain-height dependent (Gate A
+    // 2026-06-16); interaction is XZ-only (useNearestObject) so this y is purely visual.
+    position: [0, 2, 0],
     radius: INTERACT_RADIUS,
     visual: { primitive: "box", color: "#bfae8e", scale: [1.6, 1.6, 1.6] },
     interaction: { prompt: "Press E to travel", action: "open-travel" },

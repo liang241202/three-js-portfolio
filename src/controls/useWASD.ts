@@ -5,9 +5,19 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Raycaster, Vector3 } from "three";
 import type { CharacterRef, PausedRef, TerrainRef } from "./types";
 import { isInsideIsland } from "@/src/island/useIslandBoundary";
+import { WORLD_SCALE } from "@/src/island/layout";
 
 const MOVE_SPEED = 2;
 const DOWN = new Vector3(0, -1, 0);
+
+// Climb gate (mirror src/main.js gate, generalized 2026-06-16). The probe is raised by exactly one
+// terrain step (a unit cube scaled by WORLD_SCALE) before raycasting down at the target cell; a move
+// is allowed only when the future ground sits more than CLIMB_CLEARANCE below the probe. Tying the
+// probe height to WORLD_SCALE makes the margin scale-independent: a one-cube step always leaves
+// dist == the Ball's float offset (~0.5 > 0.3), so the plateau/peak climb feels identical at any
+// world scale. See memory island-world-scaling.
+const CLIMB_PROBE = new Vector3(0, WORLD_SCALE, 0);
+const CLIMB_CLEARANCE = 0.3;
 
 export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef, pausedRef?: PausedRef) {
   const { camera } = useThree();
@@ -63,12 +73,12 @@ export function useWASD(characterRef: CharacterRef, terrainRef: TerrainRef, paus
     // The terrain raycast gate below stays as a backstop for plateau/peak edges.
     if (!isInsideIsland(futurePosition.x, futurePosition.z)) return;
 
-    const rayOrigin = futurePosition.clone().add(new Vector3(0, 1, 0));
+    const rayOrigin = futurePosition.clone().add(CLIMB_PROBE);
     raycaster.set(rayOrigin, DOWN);
     const hit = raycaster.intersectObjects(terrain.children, true);
     if (hit.length > 0) {
       const dist = rayOrigin.y - hit[0].point.y;
-      if (dist > 0.3) {
+      if (dist > CLIMB_CLEARANCE) {
         char.position.add(moveVector);
       }
     }

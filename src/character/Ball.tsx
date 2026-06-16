@@ -31,8 +31,9 @@ export default function Ball({
   characterRef,
   terrainRef,
   pausedRef,
-  // Spawn x,z scaled with the 1.5x world (south open ground); y unchanged because the terrain is
-  // widened non-uniformly (height kept at 1x), so vertical behavior is identical (Gate A 2026-06-14).
+  // Spawn x,z scaled with the 1.5x world (south open ground); y unchanged because the base-ground
+  // top stays at world y=0 under uniform WORLD_SCALE (base cube: -0.5*s + 0.5*s = 0), so the Ball
+  // still settles to its float offset there (Gate A 2026-06-16).
   initialPosition = [0, 2, 4.5],
 }: Props) {
   const meshRef = characterRef;

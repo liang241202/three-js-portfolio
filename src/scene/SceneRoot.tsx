@@ -60,10 +60,11 @@ export default function SceneRoot() {
             screen; the Box3 auto-fit otherwise cancels the enlargement (Gate A 2026-06-14). */}
         <CameraRig ref={rigRef} fitTarget={terrainMounted} distanceMultiplier={0.6} />
 
-        {/* Widen the terrain footprint by WORLD_SCALE on X/Z only (height kept at 1x) so the
-            spread-out objects stay on solid ground while every vertical step stays climbable and
-            the Ball's float/raycast tuning is untouched (Gate A 2026-06-14). */}
-        <group ref={setTerrain} scale={[WORLD_SCALE, 1, WORLD_SCALE]}>
+        {/* Scale the terrain uniformly by WORLD_SCALE so the cubes keep cube proportions while the
+            spread-out objects stay on solid ground. Vertical steps grow with the world, but the
+            useWASD climb gate derives its probe height from WORLD_SCALE too (scale-correct), so the
+            plateau/peak stay climbable and the temple reachable on foot (Gate A 2026-06-16). */}
+        <group ref={setTerrain} scale={WORLD_SCALE}>
           <Terrain rows={10} cols={10} size={1} />
         </group>
 
