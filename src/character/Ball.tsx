@@ -5,18 +5,27 @@ import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, Raycaster, Vector3 } from "three";
 import { useWASD } from "@/src/controls/useWASD";
 import type { PausedRef } from "@/src/controls/types";
+import { WORLD_SCALE } from "@/src/island/layout";
 
 // Mirror src/main.js:37-42 - raycaster + downward vector + float offset
 const FLOAT_OFFSET = 0.5;
 const DOWN = new Vector3(0, -1, 0);
 
-// Mirror src/main.js:198-202 - 5-point sample offsets (centre + 4 cardinal at radius 0.2)
+// Ground-probe origins ride one terrain step (WORLD_SCALE) above the Ball, not a hardcoded 1, so
+// the downward ray clears the top of the next-taller cube and actually detects it. With 1.5x cubes a
+// fixed +1 origin sits *inside* the plateau/peak (top is 1.5 up); a ray cast from inside the mesh
+// finds no down-facing ground, so the Ball never rises and walks into the slope instead of climbing.
+// Tying the probe height to WORLD_SCALE keeps float/climb tracking scale-correct, matching the
+// useWASD gate (mirror src/main.js:198-202 5-point sample, generalized 2026-06-16). See memory
+// island-world-scaling.
+const PROBE_Y = WORLD_SCALE;
+// 5-point sample offsets (centre + 4 cardinal at horizontal radius 0.2 - the Ball's own footprint).
 const SAMPLE_OFFSETS: Vector3[] = [
-  new Vector3(0, 1, 0),
-  new Vector3(0.2, 1, 0),
-  new Vector3(-0.2, 1, 0),
-  new Vector3(0, 1, 0.2),
-  new Vector3(0, 1, -0.2),
+  new Vector3(0, PROBE_Y, 0),
+  new Vector3(0.2, PROBE_Y, 0),
+  new Vector3(-0.2, PROBE_Y, 0),
+  new Vector3(0, PROBE_Y, 0.2),
+  new Vector3(0, PROBE_Y, -0.2),
 ];
 
 type Props = {
