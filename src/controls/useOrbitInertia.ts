@@ -17,21 +17,22 @@ const PITCH_RANGE = (15 * Math.PI) / 180;
 const MIN_ELEVATION = DEFAULT_ELEVATION - PITCH_RANGE;
 const MAX_ELEVATION = DEFAULT_ELEVATION + PITCH_RANGE;
 
-// Apply a vertical (pitch) drag about the live horizontal right axis, limited so the view's
-// elevation stays within [MIN_ELEVATION, MAX_ELEVATION]. The delta is clamped BEFORE it is applied
-// (not corrected afterwards), so no drag magnitude can rotate the camera past the band or over the
-// pole - asin(dir.y) is therefore always an unambiguous elevation. Yaw runs about WORLD up and the
-// right axis stays horizontal (no roll), so pitching about it changes elevation by exactly the
-// rotation angle, making this a direct angle clamp.
+// Apply a vertical (pitch) drag, clamped so the view's elevation stays within
+// [MIN_ELEVATION, MAX_ELEVATION]. The target elevation is clamped FIRST, then the pivot is rotated by
+// the minimal rotation mapping the current view direction onto one with the SAME azimuth and the
+// clamped elevation. That minimal rotation's axis is the horizontal axis perpendicular to the view
+// heading, so it changes elevation only (no azimuth drift) and lands exactly on the target; because
+// the target is always in-band the elevation never nears the pole and never folds, at any drag size.
 function applyClampedPitch(pivot: Group, camera: Camera, ay: number) {
-  const right = new Vector3(1, 0, 0).applyQuaternion(pivot.quaternion).normalize();
   const dir = new Vector3().copy(camera.position).applyQuaternion(pivot.quaternion).normalize();
   const elevation = Math.asin(Math.max(-1, Math.min(1, dir.y)));
-  // Dragging down (ay > 0) raises the camera; cap the resulting elevation to the band.
-  const targetElevation = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, elevation + ay));
-  pivot.quaternion.premultiply(
-    new Quaternion().setFromAxisAngle(right, elevation - targetElevation),
-  );
+  // Dragging down (ay > 0) raises the camera; the band caps how far it can go.
+  const target = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, elevation + ay));
+  if (Math.abs(target - elevation) < 1e-6) return;
+  const h = Math.hypot(dir.x, dir.z) || 1e-6;
+  const cos = Math.cos(target);
+  const desired = new Vector3((dir.x / h) * cos, Math.sin(target), (dir.z / h) * cos).normalize();
+  pivot.quaternion.premultiply(new Quaternion().setFromUnitVectors(dir, desired));
 }
 
 export function useOrbitInertia(pivotRef: PivotRef, draggingRef?: DraggingRef) {
