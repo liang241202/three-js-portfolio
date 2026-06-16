@@ -62,11 +62,14 @@ const baseObjects: IslandObject[] = [
     id: "center-temple",
     kind: "utility",
     label: "Temple",
-    // y re-seated to 2 (was 1): the terrain is now scaled uniformly by WORLD_SCALE, so the central
-    // peak top rose 2.0 -> 3.0. The temple is a sibling (not scaled), so it is lifted by the same
-    // delta to keep the same seating on the peak. Hand-tuned, terrain-height dependent (Gate A
-    // 2026-06-16); interaction is XZ-only (useNearestObject) so this y is purely visual.
-    position: [0, 2, 0],
+    // y re-seated to 1.5 (was 1): the temple sits flush on the PLATEAU, not the peak. The terrain
+    // is now scaled uniformly by WORLD_SCALE, so the plateau top rose 1.0 -> 1.5. The temple is a
+    // sibling (not scaled), so its base is lifted by that same +0.5 delta to stay flush on the
+    // plateau surface — no floating gap for the Ball to walk under. (An earlier pass used the
+    // peak's +1.0 delta by mistake, which left the base hovering 0.5 above the plateau.) The
+    // central peak cube still pokes up through one corner as before. Hand-tuned, terrain-height
+    // dependent; interaction is XZ-only (useNearestObject) so this y is purely visual.
+    position: [0, 1.5, 0],
     radius: INTERACT_RADIUS,
     visual: { primitive: "box", color: "#bfae8e", scale: [1.6, 1.6, 1.6] },
     interaction: { prompt: "Press E to travel", action: "open-travel" },
