@@ -19,9 +19,11 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
         const isDark = (i + j) % 2 === 0;
-        const color = isDark ? 0x9fc5e8 : 0xcfe2f3;
         let height = 0;
         if (i >= 3 && i <= 6 && j >= 3 && j <= 6) height = 1;
+        // Cosmic-night palette (Gate A 2026-06-18): slate rock at the base, mossy green on the raised
+        // plateau, each with a subtle two-tone checker so it reads as textured stone, not a chessboard.
+        const color = height > 0 ? (isDark ? 0x46583f : 0x52664a) : (isDark ? 0x363f4e : 0x3e4a59);
         // The legacy lone peak (i===5 && j===5 -> height 2) was dropped 2026-06-16: it sits hidden
         // under the temple, and a cube taller than the temple's walkable floor would poke through it
         // and fight the TempleFloorCollider (the Ball would jitter up onto the stub). The temple
@@ -44,7 +46,7 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
     <group>
       {cubes.items.map((c) => (
         <mesh key={c.key} position={c.pos} geometry={cubes.geometry}>
-          <meshStandardMaterial color={c.color} />
+          <meshStandardMaterial color={c.color} roughness={0.82} metalness={0.08} />
         </mesh>
       ))}
     </group>

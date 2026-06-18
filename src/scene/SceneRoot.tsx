@@ -2,9 +2,13 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Group, Mesh } from "three";
+import { Group, Mesh, NoToneMapping } from "three";
+import { ContactShadows, Sparkles } from "@react-three/drei";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import Terrain from "./Terrain";
+import SpaceBackdrop from "./SpaceBackdrop";
+import SceneLighting from "./SceneLighting";
+import PostFX from "./PostFX";
 import Ball from "@/src/character/Ball";
 import IslandObjects from "@/src/island/IslandObjects";
 import TempleFloorCollider from "@/src/island/TempleFloorCollider";
@@ -52,14 +56,17 @@ export default function SceneRoot() {
     <div className="relative h-full w-full">
       <Canvas
         camera={{ fov: 75, near: 0.01, far: 2000 }}
-        gl={{ antialias: true }}
+        // Disable renderer tone mapping so the scene reaches PostFX's EffectComposer in HDR; ACES is
+        // applied there as the final effect, after Bloom isolates the emissive highlights.
+        gl={{ antialias: true, toneMapping: NoToneMapping }}
       >
-        {/* Cosmic void: the island reads as a floating world suspended in space (spec §11). */}
-        <color attach="background" args={["#05060a"]} />
+        {/* Cosmic void: the island reads as a floating world suspended in space (spec §11). The flat
+            base color is a fallback behind the gradient backdrop sphere. */}
+        <color attach="background" args={["#070512"]} />
 
-        {/* Mirror src/main.js:20-21 - lights */}
-        <directionalLight intensity={1} position={[5, 10, 7.5]} />
-        <ambientLight intensity={0.3} />
+        {/* Cosmic-night dreamscape: gradient sky + starfield, designed teal/magenta env lighting. */}
+        <SpaceBackdrop />
+        <SceneLighting />
 
         {/* distanceMultiplier pulled further in (1.3 -> 0.6) so the now-1.5x world reads bigger on
             screen; the Box3 auto-fit otherwise cancels the enlargement (Gate A 2026-06-14). */}
@@ -85,6 +92,31 @@ export default function SceneRoot() {
         />
 
         <InteractionDriver characterRef={characterRef} onNearestChange={onNearestChange} />
+
+        {/* Soft contact shadow grounds the island/objects on the base ground (top at world y=0) so
+            they read with weight instead of floating; dynamic so it tracks the rolling Ball. */}
+        <ContactShadows
+          position={[0, 0.02, 0]}
+          scale={22}
+          blur={2.6}
+          far={8}
+          opacity={0.5}
+          color="#04030a"
+          resolution={1024}
+        />
+
+        {/* Drifting motes for a dreamy, alive atmosphere over the island. */}
+        <Sparkles
+          count={45}
+          scale={[18, 8, 18]}
+          position={[0, 3, 0]}
+          size={3}
+          speed={0.25}
+          opacity={0.5}
+          color="#bcdcff"
+        />
+
+        <PostFX />
       </Canvas>
 
       <InteractionPrompt prompt={promptText} />
