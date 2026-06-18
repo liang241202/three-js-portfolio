@@ -1,6 +1,7 @@
 import type { IslandObject, TravelDestination } from "@/src/island/types";
 import { islandObjects } from "@/src/island/data/objects";
 import { ISLAND_HALF_EXTENT } from "@/src/island/useIslandBoundary";
+import { objectStopDistance } from "@/src/island/collision";
 
 // Quick-travel destinations = the 5 portfolio (open-card) objects; the temple is never a destination (spec §10.1).
 export const travelDestinations: TravelDestination[] = islandObjects
@@ -11,10 +12,15 @@ export const travelDestinations: TravelDestination[] = islandObjects
 const FLOAT_OFFSET = 0.5;
 // Keep the landing this far inside the walkable square so the player never spawns on the edge.
 const BOUNDARY_MARGIN = 0.3;
+// Land this far OUTSIDE the object's solid collider so the first move after a teleport doesn't pop
+// the Ball back to the surface (cross-model review 2026-06-18).
+const LANDING_MARGIN = 0.1;
 
 // Distance from (x,z) along outward unit vector (ux,uz) to the square walkable boundary: the
-// smallest positive hit against the four walls at +/-ISLAND_HALF_EXTENT. Returns 0 if the point is
-// already on/outside the square or the ray is degenerate (so the landing never crosses the edge).
+// smallest positive hit against the four walls at +/-ISLAND_HALF_EXTENT. Returns 0 if the ray is
+// degenerate or the nearest wall lies behind the point along (ux,uz) (e.g. the point is on/outside
+// the boundary in that direction) — so for the outward direction used here the landing never crosses
+// the edge.
 function maxOutwardOffset(x: number, z: number, ux: number, uz: number): number {
   let t = Infinity;
   if (ux > 1e-9) t = Math.min(t, (ISLAND_HALF_EXTENT - x) / ux);
@@ -35,9 +41,11 @@ export function computeTeleportLanding(target: IslandObject): [number, number, n
   const ux = horiz > 1e-6 ? x / horiz : 0;
   const uz = horiz > 1e-6 ? z / horiz : 0;
 
-  // Sit ~half the interaction radius out so the prompt is available, but never past the boundary.
+  // Sit just outside the object's solid collider so the prompt is available and the first move
+  // doesn't pop the Ball back out, but never past the walkable boundary. The stop distance (~1.1) plus
+  // margin stays under the interaction radius (1.5), so the prompt still shows on arrival.
   const room = maxOutwardOffset(x, z, ux, uz) - BOUNDARY_MARGIN;
-  const offset = Math.max(0, Math.min(target.radius * 0.55, room));
+  const offset = Math.max(0, Math.min(objectStopDistance(target) + LANDING_MARGIN, room));
 
   return [x + ux * offset, y + FLOAT_OFFSET, z + uz * offset];
 }
