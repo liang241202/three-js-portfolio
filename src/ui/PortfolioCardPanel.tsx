@@ -1,10 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PortfolioCardPanelProps } from "@/src/island/types";
 
 export function PortfolioCardPanel({ card, onClose }: PortfolioCardPanelProps) {
+  const panelRef = useRef<HTMLElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
+
+  // Mirror React state to the browser's real fullscreen status so the button label and layout stay
+  // correct however fullscreen is left — including the native ESC exit. (With the card fullscreen,
+  // the first ESC exits fullscreen; a second ESC reaches the interaction layer and closes the card.)
+  useEffect(() => {
+    const sync = () =>
+      setFullscreen(
+        document.fullscreenElement != null && document.fullscreenElement === panelRef.current,
+      );
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+
+  // Take the panel itself fullscreen (not the whole document) so reading a card is immersive and the
+  // 3D scene behind it is hidden. requestFullscreen can reject (e.g. without a user gesture); swallow
+  // it — the windowed panel is a fine fallback.
+  const toggleFullscreen = useCallback(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {});
+    } else {
+      void el.requestFullscreen().catch(() => {});
+    }
+  }, []);
 
   if (card === null) {
     return null;
@@ -16,11 +42,12 @@ export function PortfolioCardPanel({ card, onClose }: PortfolioCardPanelProps) {
 
   return (
     <aside
+      ref={panelRef}
       className={[
-        "fixed right-0 top-0 z-40 h-dvh overflow-hidden border-l border-amber-100/16 bg-[#11100e]/94 text-stone-100 shadow-[0_0_80px_rgba(0,0,0,0.58)] backdrop-blur-xl",
+        "fixed right-0 top-0 z-40 h-dvh overflow-hidden bg-[#11100e]/94 text-stone-100 shadow-[0_0_80px_rgba(0,0,0,0.58)] backdrop-blur-xl",
         fullscreen
           ? "w-dvw"
-          : "w-full sm:w-[72vw] lg:w-[66.666vw] xl:w-[64vw]",
+          : "w-full border-l border-amber-100/16 sm:w-[72vw] lg:w-[66.666vw] xl:w-[64vw]",
       ].join(" ")}
       aria-label={`${card.title} portfolio card`}
     >
@@ -28,7 +55,7 @@ export function PortfolioCardPanel({ card, onClose }: PortfolioCardPanelProps) {
         <header className="flex shrink-0 items-center justify-end gap-2 border-b border-white/10 px-5 py-4 sm:px-7">
           <button
             type="button"
-            onClick={() => setFullscreen((current) => !current)}
+            onClick={toggleFullscreen}
             className="rounded-full border border-white/14 bg-white/7 px-3 py-2 text-xs font-medium uppercase tracking-[0.16em] text-stone-200 transition hover:border-amber-200/38 hover:bg-amber-200/10 hover:text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-200/55"
           >
             {fullscreen ? "Panel" : "Fullscreen"}
