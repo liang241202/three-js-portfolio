@@ -5,10 +5,22 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Raycaster, Vector3 } from "three";
 import type { CharacterRef, PausedRef, TerrainRef, WalkColliderRef } from "./types";
 import { isInsideIsland } from "@/src/island/useIslandBoundary";
+import { islandObjects } from "@/src/island/data/objects";
 import { WORLD_SCALE } from "@/src/island/layout";
 
 const MOVE_SPEED = 2;
 const DOWN = new Vector3(0, -1, 0);
+
+// Mirror src/character/Ball.tsx sphereGeometry radius.
+const BALL_RADIUS = 0.3;
+// Solid footprints for the interactable objects so the Ball can't walk through them (2026-06-18).
+// The temple is excluded — it is the walkable hub the Ball climbs onto via TempleFloorCollider. The
+// collision radius approximates each blockout's footprint from its visual scale; it stays smaller
+// than the interaction radius (1.5) so the prompt still fires before the Ball is stopped. Built once
+// from the static registry.
+const OBJECT_COLLIDERS = islandObjects
+  .filter((o) => o.id !== "center-temple")
+  .map((o) => ({ x: o.position[0], z: o.position[2], r: 0.5 * (o.visual.scale?.[0] ?? 1) }));
 
 // Climb gate (mirror src/main.js gate, generalized 2026-06-16). The probe is raised by exactly one
 // terrain step (a unit cube scaled by WORLD_SCALE) before raycasting down at the target cell; a move
@@ -74,8 +86,24 @@ export function useWASD(
 
     const futurePosition = char.position.clone().add(moveVector);
 
-    // Island boundary: reject moves that would leave the walkable ellipse (spec §11).
+    // Island boundary: reject moves that would leave the walkable square (spec §11).
     // The terrain raycast gate below stays as a backstop for plateau/peak edges.
+    if (!isInsideIsland(futurePosition.x, futurePosition.z)) return;
+
+    // Solid objects: if the move would end inside an object's footprint, push it back out to the
+    // surface (XZ only). The Ball slides around the object instead of passing through it.
+    for (const c of OBJECT_COLLIDERS) {
+      const dx = futurePosition.x - c.x;
+      const dz = futurePosition.z - c.z;
+      const minDist = c.r + BALL_RADIUS;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < minDist * minDist && d2 > 1e-8) {
+        const push = minDist / Math.sqrt(d2);
+        futurePosition.x = c.x + dx * push;
+        futurePosition.z = c.z + dz * push;
+      }
+    }
+    // A push near the rim could nudge the landing past the edge — re-check the boundary.
     if (!isInsideIsland(futurePosition.x, futurePosition.z)) return;
 
     const rayOrigin = futurePosition.clone().add(CLIMB_PROBE);
@@ -88,7 +116,7 @@ export function useWASD(
     if (hit.length > 0) {
       const dist = rayOrigin.y - hit[0].point.y;
       if (dist > CLIMB_CLEARANCE) {
-        char.position.add(moveVector);
+        char.position.copy(futurePosition);
       }
     }
   });

@@ -1,16 +1,14 @@
 import { WORLD_SCALE } from "@/src/island/layout";
 
-// Elliptical walkable boundary (spec §11). Base semi-axes 4.3 sit inside the unit 10x10 terrain
-// (x,z in [-4.5,4.5]); scaled by WORLD_SCALE they track the enlarged terrain (size 1.5 -> edges
-// +/-7.5, cube centers +/-6.75) so the character stops before the island edge and never walks
-// out over the cosmic void. A circle is the equal-axis special case kept here for v1.
-export const ISLAND_SEMI_AXIS_X = 4.3 * WORLD_SCALE;
-export const ISLAND_SEMI_AXIS_Z = 4.3 * WORLD_SCALE;
+// Square walkable boundary (spec §11). The terrain is a 10x10 grid of unit cubes scaled by
+// WORLD_SCALE: the outer edge sits at +/-(5*WORLD_SCALE) and the OUTERMOST cube centers at
+// +/-(4.5*WORLD_SCALE). Clamping to those cube centers lets the player roam the whole square island
+// — corners included — while the Ball (radius 0.3 << cube half 0.75*WORLD_SCALE) stays fully
+// supported on the edge cubes. This replaces the earlier inscribed ellipse, which left the corners
+// and a wide rim unreachable and read as a too-small circle (2026-06-18). The climb-gate raycast in
+// useWASD remains the backstop for plateau/peak edges.
+export const ISLAND_HALF_EXTENT = 4.5 * WORLD_SCALE;
 
 export function isInsideIsland(x: number, z: number): boolean {
-  return (
-    (x * x) / (ISLAND_SEMI_AXIS_X * ISLAND_SEMI_AXIS_X) +
-      (z * z) / (ISLAND_SEMI_AXIS_Z * ISLAND_SEMI_AXIS_Z) <=
-    1
-  );
+  return Math.abs(x) <= ISLAND_HALF_EXTENT && Math.abs(z) <= ISLAND_HALF_EXTENT;
 }

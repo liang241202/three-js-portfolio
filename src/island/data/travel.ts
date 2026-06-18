@@ -1,6 +1,6 @@
 import type { IslandObject, TravelDestination } from "@/src/island/types";
 import { islandObjects } from "@/src/island/data/objects";
-import { ISLAND_SEMI_AXIS_X, ISLAND_SEMI_AXIS_Z } from "@/src/island/useIslandBoundary";
+import { ISLAND_HALF_EXTENT } from "@/src/island/useIslandBoundary";
 
 // Quick-travel destinations = the 5 portfolio (open-card) objects; the temple is never a destination (spec §10.1).
 export const travelDestinations: TravelDestination[] = islandObjects
@@ -9,27 +9,19 @@ export const travelDestinations: TravelDestination[] = islandObjects
 
 // Float offset the Ball settles to above ground (mirror src/character/Ball.tsx FLOAT_OFFSET).
 const FLOAT_OFFSET = 0.5;
-// Keep the landing this far inside the walkable ellipse so the player never spawns on the edge.
+// Keep the landing this far inside the walkable square so the player never spawns on the edge.
 const BOUNDARY_MARGIN = 0.3;
 
-// Distance from (x,z) along outward unit vector (ux,uz) to the walkable ellipse boundary
-// (positive root of the ray/ellipse intersection). Returns 0 if the point is on/outside the
-// ellipse (c >= 0) or the ray is degenerate.
+// Distance from (x,z) along outward unit vector (ux,uz) to the square walkable boundary: the
+// smallest positive hit against the four walls at +/-ISLAND_HALF_EXTENT. Returns 0 if the point is
+// already on/outside the square or the ray is degenerate (so the landing never crosses the edge).
 function maxOutwardOffset(x: number, z: number, ux: number, uz: number): number {
-  const ax2 = ISLAND_SEMI_AXIS_X * ISLAND_SEMI_AXIS_X;
-  const az2 = ISLAND_SEMI_AXIS_Z * ISLAND_SEMI_AXIS_Z;
-  const a = (ux * ux) / ax2 + (uz * uz) / az2;
-  const b = (2 * x * ux) / ax2 + (2 * z * uz) / az2;
-  const c = (x * x) / ax2 + (z * z) / az2 - 1;
-  if (a < 1e-9) return 0;
-  // c is the point's signed position vs the ellipse (<0 inside, >=0 on/outside). The "+sqrt" root
-  // below is the outward boundary distance only when the point is strictly inside; on/outside it
-  // would push the landing past the far edge, so refuse any outward offset there. (All v1 objects
-  // sit inside, so this never triggers today — it guards a future object placed on/outside.)
-  if (c >= 0) return 0;
-  const disc = b * b - 4 * a * c;
-  if (disc <= 0) return 0;
-  return (-b + Math.sqrt(disc)) / (2 * a);
+  let t = Infinity;
+  if (ux > 1e-9) t = Math.min(t, (ISLAND_HALF_EXTENT - x) / ux);
+  else if (ux < -1e-9) t = Math.min(t, (-ISLAND_HALF_EXTENT - x) / ux);
+  if (uz > 1e-9) t = Math.min(t, (ISLAND_HALF_EXTENT - z) / uz);
+  else if (uz < -1e-9) t = Math.min(t, (-ISLAND_HALF_EXTENT - z) / uz);
+  return t === Infinity ? 0 : Math.max(0, t);
 }
 
 // Land the character on the destination's boundary-facing (outer) side so the player arrives

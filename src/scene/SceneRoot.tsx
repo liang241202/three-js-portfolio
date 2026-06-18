@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Group, Mesh, NoToneMapping } from "three";
-import { ContactShadows, Sparkles } from "@react-three/drei";
+import { Sparkles } from "@react-three/drei";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import Terrain from "./Terrain";
 import SpaceBackdrop from "./SpaceBackdrop";
@@ -92,18 +92,6 @@ export default function SceneRoot() {
         />
 
         <InteractionDriver characterRef={characterRef} onNearestChange={onNearestChange} />
-
-        {/* Soft contact shadow grounds the island/objects on the base ground (top at world y=0) so
-            they read with weight instead of floating; dynamic so it tracks the rolling Ball. */}
-        <ContactShadows
-          position={[0, 0.02, 0]}
-          scale={22}
-          blur={2.6}
-          far={8}
-          opacity={0.5}
-          color="#04030a"
-          resolution={1024}
-        />
 
         {/* Drifting motes for a dreamy, alive atmosphere over the island. */}
         <Sparkles
