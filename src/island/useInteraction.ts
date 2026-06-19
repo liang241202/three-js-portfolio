@@ -12,8 +12,15 @@ import { findNearestObjectId } from "@/src/island/useNearestObject";
 export type UseInteraction = {
   /** Stable callback for InteractionDriver to report the nearest object id. */
   onNearestChange: (id: string | null) => void;
-  /** Mirrors "a panel is open"; read in useWASD's frame loop to pause movement. */
+  /** Mirrors "a panel is open OR the intro gate is still up"; read in useWASD's frame loop to pause
+   *  movement. The intro folds in here so input gating lives in one place. */
   pausedRef: RefObject<boolean>;
+  /** False until the visitor dismisses the intro gate (START). Drives the IntroGate overlay. */
+  introStarted: boolean;
+  /** Ref mirror of introStarted for the EdgeReveal frame loop (eases the colour flood). */
+  introStartedRef: RefObject<boolean>;
+  /** Dismiss the intro gate and let the world come alive. */
+  startIntro: () => void;
   /** Bottom-center prompt text, or null when nothing is active / a panel is open. */
   promptText: string | null;
   /** Card to show in the right-side panel, or null. */
@@ -31,16 +38,21 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
   const [nearestObjectId, setNearestObjectId] = useState<string | null>(null);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [travelOpen, setTravelOpen] = useState(false);
+  const [introStarted, setIntroStarted] = useState(false);
 
   const panelOpen = openCardId !== null || travelOpen;
 
-  // Mirror "a panel is open" into a ref for useWASD's frame loop. Written in a layout effect
-  // (not during render, per react-hooks/refs) so the pause is committed before the next
-  // animation frame — WASD never advances a frame after a panel opens.
-  const pausedRef = useRef(false);
+  // Mirror "a panel is open OR the intro is still up" into refs for the frame loops. Written in a
+  // layout effect (not during render, per react-hooks/refs) so the pause is committed before the next
+  // animation frame — WASD never advances a frame after a panel opens or while the intro plays.
+  const pausedRef = useRef(true); // starts paused: the intro gate is up on first paint
+  const introStartedRef = useRef(false);
   useLayoutEffect(() => {
-    pausedRef.current = panelOpen;
-  }, [panelOpen]);
+    pausedRef.current = panelOpen || !introStarted;
+    introStartedRef.current = introStarted;
+  }, [panelOpen, introStarted]);
+
+  const startIntro = useCallback(() => setIntroStarted(true), []);
 
   const onNearestChange = useCallback((id: string | null) => setNearestObjectId(id), []);
   const closeCard = useCallback(() => setOpenCardId(null), []);
@@ -67,6 +79,8 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
   // without reading refs during render. These changes are user-paced (low frequency).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // The intro gate swallows all interaction keys until START is pressed.
+      if (!introStarted) return;
       if (e.key === "e" || e.key === "E") {
         // Pressing E while a panel is open does nothing in v1 (spec §10 rule 7).
         if (panelOpen) return;
@@ -85,7 +99,7 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [panelOpen, nearestObjectId, openCardId, travelOpen]);
+  }, [introStarted, panelOpen, nearestObjectId, openCardId, travelOpen]);
 
   const activeCard = openCardId ? getPortfolioCard(openCardId) ?? null : null;
   const promptText =
@@ -96,6 +110,9 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
   return {
     onNearestChange,
     pausedRef,
+    introStarted,
+    introStartedRef,
+    startIntro,
     promptText,
     activeCard,
     travelOpen,

@@ -19,6 +19,7 @@ import { WORLD_SCALE } from "@/src/island/layout";
 import InteractionPrompt from "@/src/ui/InteractionPrompt";
 import PortfolioCardPanel from "@/src/ui/PortfolioCardPanel";
 import QuickTravelPanel from "@/src/ui/QuickTravelPanel";
+import IntroGate from "@/src/ui/IntroGate";
 
 export default function SceneRoot() {
   const rigRef = useRef<CameraRigHandle>(null);
@@ -43,6 +44,9 @@ export default function SceneRoot() {
   const {
     onNearestChange,
     pausedRef,
+    introStarted,
+    introStartedRef,
+    startIntro,
     promptText,
     activeCard,
     travelOpen,
@@ -110,7 +114,7 @@ export default function SceneRoot() {
           color="#bcdcff"
         />
 
-        <PostFX />
+        <PostFX introStartedRef={introStartedRef} />
       </Canvas>
 
       <InteractionPrompt prompt={promptText} />
@@ -121,6 +125,7 @@ export default function SceneRoot() {
         onSelect={onSelectDestination}
         onClose={closeTravel}
       />
+      <IntroGate started={introStarted} onStart={startIntro} />
     </div>
   );
 }
