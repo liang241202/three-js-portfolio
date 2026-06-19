@@ -6,6 +6,7 @@ import { Group, Mesh, NoToneMapping } from "three";
 import { Sparkles } from "@react-three/drei";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import Terrain from "./Terrain";
+import GoldenSlice, { GOLDEN_SLICE_CELLS } from "./GoldenSlice";
 import SpaceBackdrop from "./SpaceBackdrop";
 import SceneLighting from "./SceneLighting";
 import PostFX from "./PostFX";
@@ -92,8 +93,12 @@ export default function SceneRoot() {
             useWASD climb gate derives its probe height from WORLD_SCALE too (scale-correct), so the
             plateau/peak stay climbable and the temple reachable on foot (Gate A 2026-06-16). */}
         <group ref={setTerrain} scale={WORLD_SCALE}>
-          <Terrain rows={10} cols={10} size={1} />
+          <Terrain rows={10} cols={10} size={1} hideCells={GOLDEN_SLICE_CELLS} />
         </group>
+
+        {/* Stylized-realistic golden slice over the hidden -X/-Z corner (own scale group; NOT in
+            the terrain group, which the camera Box3-fit and Ball raycast depend on). */}
+        <GoldenSlice />
 
         <IslandObjects />
 

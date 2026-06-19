@@ -7,10 +7,14 @@ type Props = {
   rows?: number;
   cols?: number;
   size?: number;
+  // Cells (keyed `${i}-${j}`) to skip RENDERING — GoldenSlice uses this to clear its corner.
+  // Collision/raycast are unaffected (the Ball reads the terrain group; a non-rendered cube
+  // simply has no mesh). Absent = current behavior, so this is backward compatible.
+  hideCells?: ReadonlySet<string>;
 };
 
 // Mirror src/main.js:259-283 generateGround
-export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
+export default function Terrain({ rows = 10, cols = 10, size = 1, hideCells }: Props) {
   const cubes = useMemo(() => {
     const halfW = (cols * size) / 2;
     const halfH = (rows * size) / 2;
@@ -18,6 +22,8 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
     const items: { key: string; pos: [number, number, number]; color: number }[] = [];
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
+        const key = `${i}-${j}`;
+        if (hideCells?.has(key)) continue;
         const isDark = (i + j) % 2 === 0;
         let height = 0;
         if (i >= 3 && i <= 6 && j >= 3 && j <= 6) height = 1;
@@ -29,7 +35,7 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
         // and fight the TempleFloorCollider (the Ball would jitter up onto the stub). The temple
         // floor is now the island's central high point.
         items.push({
-          key: `${i}-${j}`,
+          key,
           pos: [
             j * size - halfW + size / 2,
             height * size - 0.5,
@@ -40,7 +46,7 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
       }
     }
     return { items, geometry };
-  }, [rows, cols, size]);
+  }, [rows, cols, size, hideCells]);
 
   return (
     <group>
