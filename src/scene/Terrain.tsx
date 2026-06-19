@@ -7,9 +7,13 @@ type Props = {
   rows?: number;
   cols?: number;
   size?: number;
-  // Cells (keyed `${i}-${j}`) to skip RENDERING — GoldenSlice uses this to clear its corner.
-  // Collision/raycast are unaffected (the Ball reads the terrain group; a non-rendered cube
-  // simply has no mesh). Absent = current behavior, so this is backward compatible.
+  // Cells (keyed `${i}-${j}`) to skip RENDERING, so GoldenSlice's stylized art replaces the voxels
+  // there. A skipped cube has NO mesh, so it also leaves the Ball's raycast set (the Ball probes
+  // `terrain.children`): the useWASD climb gate requires a ground hit to advance, so it BLOCKS the
+  // Ball from stepping onto a cleared cell, and the float probe holds Y on a miss — i.e. the cleared
+  // corner becomes a non-walkable scenic vista with no fall-through (walkability there is out of
+  // scope for the slice). The camera Box3-fit is unaffected: row 0 / col 0 keep cubes at j,i>=3, so
+  // the island's min-x/min-z bounds don't move. Absent = current behavior (backward compatible).
   hideCells?: ReadonlySet<string>;
 };
 
