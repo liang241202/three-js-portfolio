@@ -45,8 +45,8 @@ export default function IntroGate({ started, onStart }: Props) {
       >
         Enter
       </button>
-      <p className="mt-10 text-[11px] tracking-[0.25em] text-white/35">
-        拖曳環視　·　WASD 漫遊　·　E 互動
+      <p className="mt-10 text-[11px] uppercase tracking-[0.25em] text-white/35">
+        Drag to look&nbsp;&nbsp;·&nbsp;&nbsp;WASD to move&nbsp;&nbsp;·&nbsp;&nbsp;E to interact
       </p>
     </div>
   );
