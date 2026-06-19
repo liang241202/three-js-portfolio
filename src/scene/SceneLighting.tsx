@@ -10,7 +10,24 @@ export default function SceneLighting() {
   return (
     <>
       <ambientLight intensity={0.28} color="#4a5a8c" />
-      <directionalLight position={[7, 13, 8]} intensity={1.5} color="#e6ecff" />
+      {/* The key light casts the scene's real shadows. The orthographic shadow frustum is sized to the
+          1.5x world (terrain reaches +/-7.5, props a little beyond); normalBias clears the acne the flat
+          cube-grid faces would otherwise self-shadow. */}
+      <directionalLight
+        position={[7, 13, 8]}
+        intensity={1.5}
+        color="#e6ecff"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-near={0.5}
+        shadow-camera-far={40}
+        shadow-camera-left={-14}
+        shadow-camera-right={14}
+        shadow-camera-top={14}
+        shadow-camera-bottom={-14}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.04}
+      />
       <Environment resolution={256} frames={1}>
         <Lightformer
           form="rect"

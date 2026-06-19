@@ -45,7 +45,7 @@ export default function Terrain({ rows = 10, cols = 10, size = 1 }: Props) {
   return (
     <group>
       {cubes.items.map((c) => (
-        <mesh key={c.key} position={c.pos} geometry={cubes.geometry}>
+        <mesh key={c.key} position={c.pos} geometry={cubes.geometry} receiveShadow>
           <meshStandardMaterial color={c.color} roughness={0.82} metalness={0.08} />
         </mesh>
       ))}

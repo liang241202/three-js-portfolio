@@ -55,6 +55,10 @@ export default function SceneRoot() {
     // Relative wrapper: Canvas plus screen-fixed HTML overlays as DOM siblings (spec §12).
     <div className="relative h-full w-full">
       <Canvas
+        // Soft shadow maps (PCFSoft) give the floating props a real cast shadow on the terrain, which
+        // brings back the grounding the removed ContactShadows provided — but driven by the actual key
+        // light, so it tracks the bob instead of leaving a trail (handoff candidate 3, 2026-06-19).
+        shadows
         camera={{ fov: 75, near: 0.01, far: 2000 }}
         // Disable renderer tone mapping so the scene reaches PostFX's EffectComposer in HDR; ACES is
         // applied there as the final effect, after Bloom isolates the emissive highlights.
