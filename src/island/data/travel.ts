@@ -42,9 +42,10 @@ export function computeTeleportLanding(target: IslandObject): [number, number, n
   const uz = horiz > 1e-6 ? z / horiz : 0;
 
   // Sit just outside the object's solid collider so the prompt is available and the first move
-  // doesn't pop the Ball back out, but never past the walkable boundary. The stop distance is measured
-  // along this same outward ray (so a rectangular footprint stops at the face it actually presents) and
-  // stays under the interaction radius (1.5), so the prompt still shows on arrival.
+  // doesn't pop the Ball back out, but never past the walkable boundary. The stop distance rests the
+  // Ball perpendicular to the face the outward ray presents (so a rectangular footprint stops at its
+  // real face). It stays under the interaction radius (1.5) for the current five destinations (worst
+  // ~1.47), so the prompt shows on arrival — see outwardStopDistance's note; not guaranteed in general.
   const room = maxOutwardOffset(x, z, ux, uz) - BOUNDARY_MARGIN;
   const offset = Math.max(0, Math.min(outwardStopDistance(target, ux, uz) + LANDING_MARGIN, room));
 

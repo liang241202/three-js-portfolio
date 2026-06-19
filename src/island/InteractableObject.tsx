@@ -131,11 +131,13 @@ function renderBlockout(object: IslandObject): JSX.Element {
       // is shared with TempleFloorCollider (TEMPLE_BASE) so the Ball's walkable floor matches it.
       return (
         <group>
-          <mesh position={[0, TEMPLE_BASE.localY, 0]} castShadow>
+          {/* The base top is the Ball's walkable floor, so it receives the Ball's cast shadow too —
+              otherwise the grounding shadow vanishes the moment the Ball climbs the temple. */}
+          <mesh position={[0, TEMPLE_BASE.localY, 0]} castShadow receiveShadow>
             <boxGeometry args={[TEMPLE_BASE.width, TEMPLE_BASE.height, TEMPLE_BASE.width]} />
             <meshStandardMaterial color={c} />
           </mesh>
-          <mesh position={[0, 0.32, 0]}>
+          <mesh position={[0, 0.32, 0]} receiveShadow>
             <boxGeometry args={[0.9, 0.06, 0.9]} />
             <meshStandardMaterial color="#2a2333" emissive="#9b7bff" emissiveIntensity={1.4} />
           </mesh>

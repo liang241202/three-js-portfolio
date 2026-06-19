@@ -110,19 +110,41 @@ export function resolveCollision(x: number, z: number): [number, number] {
 }
 
 // Distance from a teleport target's center, along outward unit (ux,uz), at which the Ball comes to
-// rest just outside the collider. Round: r + BALL_RADIUS (unchanged). Box: distance to the box surface
-// along the ray + BALL_RADIUS — slightly conservative near corners, which only lands the Ball a touch
-// farther out (always outside the collider, so resolveCollision never pops the first move). Kept under
-// the interaction radius (1.5) so the proximity prompt still fires on arrival.
+// rest just outside the collider — i.e. where its closest-point distance to the footprint equals
+// BALL_RADIUS, matching resolveCollision. Round: r + BALL_RADIUS. Box: the Ball stops perpendicular to
+// whichever face/corner the ray presents, so for an oblique approach this is farther out than the bare
+// surface distance; measuring it along the ray instead (the naive min(hx/|ux|, hz/|uz|)) lands the Ball
+// a hair inside the collider and the first post-teleport move pops it (the 2026-06-18 bug, for boxes).
+// result + travel's LANDING_MARGIN must stay under the interaction radius (1.5) or the on-arrival
+// prompt won't fire (spec §10.1). That holds for the current five destinations (worst ~1.47,
+// project-02) but is NOT general — a larger footprint or a near-45 corner approach can exceed 1.5.
+// Re-check if a destination is repositioned or grown.
 export function outwardStopDistance(target: IslandObject, ux: number, uz: number): number {
   const c = objectCollider(target);
   if (c.round) return c.r + BALL_RADIUS;
-  // Ray from the box center outward exits the surface at t = min(hx/|ux|, hz/|uz|).
   const ax = Math.abs(ux);
   const az = Math.abs(uz);
-  let t = Infinity;
-  if (ax > 1e-9) t = Math.min(t, c.hx / ax);
-  if (az > 1e-9) t = Math.min(t, c.hz / az);
-  if (!Number.isFinite(t)) t = Math.max(c.hx, c.hz); // degenerate direction (center of island)
-  return t + BALL_RADIUS;
+  const r = BALL_RADIUS;
+  // distToBox along the ray is monotonic from 0 (at center), so it crosses r exactly once; whichever
+  // boundary piece below is geometrically valid is that crossing. Take the smallest valid distance.
+  let best = Infinity;
+  // Rest against an x-face: |d*ux| = hx + r, valid only while still within the z half-extent there.
+  if (ax > 1e-9) {
+    const d = (c.hx + r) / ax;
+    if (d * az <= c.hz) best = Math.min(best, d);
+  }
+  // Rest against a z-face.
+  if (az > 1e-9) {
+    const d = (c.hz + r) / az;
+    if (d * ax <= c.hx) best = Math.min(best, d);
+  }
+  // Rest against a corner: outer root of (ax*d - hx)^2 + (az*d - hz)^2 = r^2 (A = ux^2+uz^2 = 1).
+  const B = -2 * (c.hx * ax + c.hz * az);
+  const C = c.hx * c.hx + c.hz * c.hz - r * r;
+  const disc = B * B - 4 * C;
+  if (disc >= 0) {
+    const d = (-B + Math.sqrt(disc)) / 2;
+    if (d * ax >= c.hx - 1e-9 && d * az >= c.hz - 1e-9) best = Math.min(best, d);
+  }
+  return Number.isFinite(best) ? best : Math.max(c.hx, c.hz) + r; // degenerate direction (island center)
 }
