@@ -5,8 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Raycaster, Vector3 } from "three";
 import type { CharacterRef, PausedRef, TerrainRef, WalkColliderRef } from "./types";
 import { isInsideIsland } from "@/src/island/useIslandBoundary";
-import { islandObjects } from "@/src/island/data/objects";
-import { BALL_RADIUS, objectCollisionRadius } from "@/src/island/collision";
+import { resolveCollision } from "@/src/island/collision";
 import { WORLD_SCALE } from "@/src/island/layout";
 
 const MOVE_SPEED = 2;
@@ -17,14 +16,6 @@ const DOWN = new Vector3(0, -1, 0);
 // endpoint always lands inside a collider it crosses; it only bites during a severe stall (cross-model
 // review 2026-06-18).
 const MAX_STEP = 0.3;
-// Solid footprints for the interactable objects so the Ball can't walk through them (2026-06-18).
-// The temple is excluded — it is the walkable hub the Ball climbs onto via TempleFloorCollider. The
-// collision radius (shared with teleport landing, see src/island/collision.ts) stays smaller than the
-// interaction radius (1.5) so the prompt still fires before the Ball is stopped. Built once from the
-// static registry.
-const OBJECT_COLLIDERS = islandObjects
-  .filter((o) => o.id !== "center-temple")
-  .map((o) => ({ x: o.position[0], z: o.position[2], r: objectCollisionRadius(o) }));
 
 // Climb gate (mirror src/main.js gate, generalized 2026-06-16). The probe is raised by exactly one
 // terrain step (a unit cube scaled by WORLD_SCALE) before raycasting down at the target cell; a move
@@ -95,18 +86,11 @@ export function useWASD(
     if (!isInsideIsland(futurePosition.x, futurePosition.z)) return;
 
     // Solid objects: if the move would end inside an object's footprint, push it back out to the
-    // surface (XZ only). The Ball slides around the object instead of passing through it.
-    for (const c of OBJECT_COLLIDERS) {
-      const dx = futurePosition.x - c.x;
-      const dz = futurePosition.z - c.z;
-      const minDist = c.r + BALL_RADIUS;
-      const d2 = dx * dx + dz * dz;
-      if (d2 < minDist * minDist && d2 > 1e-8) {
-        const push = minDist / Math.sqrt(d2);
-        futurePosition.x = c.x + dx * push;
-        futurePosition.z = c.z + dz * push;
-      }
-    }
+    // surface (XZ only). The Ball slides around the object instead of passing through it. The footprint
+    // math (boxes as AABBs, beacon as a disc) lives in collision.ts, shared with teleport landing.
+    const [rx, rz] = resolveCollision(futurePosition.x, futurePosition.z);
+    futurePosition.x = rx;
+    futurePosition.z = rz;
     // A push near the rim could nudge the landing past the edge — re-check the boundary.
     if (!isInsideIsland(futurePosition.x, futurePosition.z)) return;
 

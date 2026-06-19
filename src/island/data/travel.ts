@@ -1,7 +1,7 @@
 import type { IslandObject, TravelDestination } from "@/src/island/types";
 import { islandObjects } from "@/src/island/data/objects";
 import { ISLAND_HALF_EXTENT } from "@/src/island/useIslandBoundary";
-import { objectStopDistance } from "@/src/island/collision";
+import { outwardStopDistance } from "@/src/island/collision";
 
 // Quick-travel destinations = the 5 portfolio (open-card) objects; the temple is never a destination (spec §10.1).
 export const travelDestinations: TravelDestination[] = islandObjects
@@ -42,10 +42,11 @@ export function computeTeleportLanding(target: IslandObject): [number, number, n
   const uz = horiz > 1e-6 ? z / horiz : 0;
 
   // Sit just outside the object's solid collider so the prompt is available and the first move
-  // doesn't pop the Ball back out, but never past the walkable boundary. The stop distance (~1.1) plus
-  // margin stays under the interaction radius (1.5), so the prompt still shows on arrival.
+  // doesn't pop the Ball back out, but never past the walkable boundary. The stop distance is measured
+  // along this same outward ray (so a rectangular footprint stops at the face it actually presents) and
+  // stays under the interaction radius (1.5), so the prompt still shows on arrival.
   const room = maxOutwardOffset(x, z, ux, uz) - BOUNDARY_MARGIN;
-  const offset = Math.max(0, Math.min(objectStopDistance(target) + LANDING_MARGIN, room));
+  const offset = Math.max(0, Math.min(outwardStopDistance(target, ux, uz) + LANDING_MARGIN, room));
 
   return [x + ux * offset, y + FLOAT_OFFSET, z + uz * offset];
 }
