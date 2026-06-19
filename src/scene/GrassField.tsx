@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { shaderMaterial } from "@react-three/drei";
 import { extend, useFrame, type ThreeElement } from "@react-three/fiber";
 import { Color, DoubleSide, InstancedMesh, Object3D, PlaneGeometry, Vector2 } from "three";
@@ -63,6 +63,10 @@ export default function GrassField({ area, count }: Props) {
     g.translate(0, BLADE_HEIGHT / 2, 0);
     return g;
   }, []);
+
+  // GrassField uniquely owns this geometry (unlike the GLB clones, which share useGLTF's cache),
+  // so dispose it on unmount — matches the useMemo+cleanup pattern in EdgeRevealEffect.
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   // Scatter the blades once (layout effect: meshRef is set and it runs before paint).
   useLayoutEffect(() => {

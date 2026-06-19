@@ -29,11 +29,14 @@ function useNormalizedModel(url: string, targetHeight: number, keepName?: string
     const object = gltf.scene.clone(true);
 
     if (keepName) {
-      const drop: Object3D[] = [];
-      object.traverse((o) => {
-        if (/_\d+$/.test(o.name) && o.name !== keepName) drop.push(o);
-      });
-      drop.forEach((o) => o.removeFromParent());
+      // Keep the named set member AND its descendants; drop only its siblings. (A regex over
+      // `_\d+$` over-matched group members like NormalTree_3_1/_2 and deleted the tree's geometry.)
+      const keep = object.getObjectByName(keepName);
+      if (keep?.parent) {
+        [...keep.parent.children].forEach((c) => {
+          if (c !== keep) c.removeFromParent();
+        });
+      }
     }
 
     object.traverse((o) => {
@@ -72,6 +75,9 @@ function Model({
   return (
     <group position={position} scale={scale * extraScale}>
       <group position={offset}>
+        {/* `object` is a clone(true) of useGLTF's cached scene: the node wrappers are ours but the
+            geometry/material are SHARED with the cache, so we deliberately do NOT dispose here
+            (it would corrupt the cache). GoldenSlice mounts once for the session. */}
         <primitive object={object} />
       </group>
     </group>
@@ -87,23 +93,25 @@ export default function GoldenSlice() {
     // (the camera Box3-fit and Ball raycast depend on that group's exact contents).
     <group scale={WORLD_SCALE}>
       <group position={CORNER_CENTER}>
-        {/* Stylized ground pad over the cleared corner, just above the old cube tops (y=0) to
-            avoid z-fighting; opaque so no voxel shows through. Kept flat (Ball floats correctly
-            over it — see Ball.tsx hold-on-miss). Colors tuned to the pack palette in Task 5. */}
+        {/* Soil pad over the cleared corner, just above the old cube tops (y=0) to avoid
+            z-fighting; opaque so no voxel shows through. Dark earth tone so the gaps between the
+            dense grass read as soil, not a bright plate (real textured terrain is a later lift).
+            Kept flat (Ball floats correctly over it — see Ball.tsx hold-on-miss). */}
         <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[3.4, 3.4]} />
-          <meshStandardMaterial color="#4f7a3a" roughness={0.95} metalness={0} />
+          <meshStandardMaterial color="#2d3f29" roughness={0.98} metalness={0} />
         </mesh>
 
         <Suspense fallback={null}>
           {/* Single rock (the set scatters if normalized whole) on the outer -X/-Z rim, dropped
               below the surface so it reads as a floating-island cliff edge. */}
-          <Model url="/models/cliff.glb" targetHeight={2.8} keepName="Rock_1" position={[-1.4, -0.6, -1.4]} extraScale={1.3} />
+          <Model url="/models/cliff.glb" targetHeight={3.0} keepName="Rock_1" position={[-1.5, -0.8, -1.5]} extraScale={1.3} />
           {/* Hero tree (one of the 5 in the set), planted on the pad. */}
-          <Model url="/models/tree.glb" targetHeight={2.2} keepName="NormalTree_3" position={[0.4, 0, 0.4]} />
+          <Model url="/models/tree.glb" targetHeight={2.6} keepName="NormalTree_3" position={[0.5, 0, 0.6]} />
         </Suspense>
 
-        <GrassField area={3.0} count={400} />
+        {/* Dense enough to read as a grass field that hides most of the flat pad. */}
+        <GrassField area={3.2} count={1500} />
       </group>
     </group>
   );
