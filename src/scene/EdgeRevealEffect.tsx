@@ -73,6 +73,9 @@ export default function EdgeReveal({ startedRef }: { startedRef: RefObject<boole
     if (!u) return;
     const target = startedRef.current ? 1 : 0;
     u.value += (target - u.value) * Math.min(1, delta * REVEAL_RATE);
+    // Snap home: the exp-ease only approaches 1 asymptotically, which would leave a faint cyan edge
+    // tint in the top sliver of the screen forever. Land exactly on a clean pass-through.
+    if (target === 1 && u.value > 0.999) u.value = 1;
   });
   return <primitive object={effect} dispose={null} />;
 }

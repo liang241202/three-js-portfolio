@@ -18,12 +18,16 @@ export default function IntroGate({ started, onStart }: Props) {
       // Only a light scrim — the cyan Sobel edges rendered behind are the star, so the overlay stays
       // mostly transparent and leans on text-shadow for legibility.
       style={{ background: "rgba(3,2,10,0.28)" }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="intro-title"
       aria-hidden={started}
     >
       <p className="mb-4 text-xs font-medium uppercase tracking-[0.5em] text-[#5fe9d6]/70">
         Interactive Portfolio
       </p>
       <h1
+        id="intro-title"
         className="px-6 text-center text-5xl font-semibold tracking-[0.18em] text-[#e8fffb] sm:text-7xl"
         style={{ textShadow: "0 0 24px rgba(95,233,214,0.35)" }}
       >
@@ -32,6 +36,7 @@ export default function IntroGate({ started, onStart }: Props) {
       <button
         type="button"
         onClick={onStart}
+        autoFocus
         className="pointer-events-auto mt-12 rounded-full border border-[#5fe9d6]/60 px-10 py-3 text-sm
           font-semibold uppercase tracking-[0.35em] text-[#bafff5] transition-all duration-300
           hover:border-[#5fe9d6] hover:bg-[#5fe9d6]/10 hover:tracking-[0.45em]

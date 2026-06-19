@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from "react";
+import { forwardRef, useImperativeHandle, useLayoutEffect, useRef, type RefObject } from "react";
 import { useThree } from "@react-three/fiber";
 import { Box3, Group, Object3D, PerspectiveCamera, Vector3 } from "three";
 import { useOrbitInertia } from "@/src/controls/useOrbitInertia";
@@ -15,10 +15,12 @@ export type CameraRigHandle = {
 type Props = {
   fitTarget: Object3D | null;
   distanceMultiplier?: number;
+  /** While false, the window-level R-hold reset is ignored (intro gate up). */
+  introStartedRef?: RefObject<boolean>;
 };
 
 const CameraRig = forwardRef<CameraRigHandle, Props>(function CameraRig(
-  { fitTarget, distanceMultiplier = 2 },
+  { fitTarget, distanceMultiplier = 2, introStartedRef },
   ref,
 ) {
   const pivotRef = useRef<Group | null>(null);
@@ -67,7 +69,7 @@ const CameraRig = forwardRef<CameraRigHandle, Props>(function CameraRig(
   useOrbitInertia(pivotRef, draggingRef);
   usePan(pivotRef);
   useZoom(pivotRef);
-  useResetView(pivotRef, draggingRef);
+  useResetView(pivotRef, draggingRef, introStartedRef);
 
   return <group ref={pivotRef} />;
 });

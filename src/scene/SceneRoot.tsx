@@ -80,7 +80,12 @@ export default function SceneRoot() {
 
         {/* distanceMultiplier pulled further in (1.3 -> 0.6) so the now-1.5x world reads bigger on
             screen; the Box3 auto-fit otherwise cancels the enlargement (Gate A 2026-06-14). */}
-        <CameraRig ref={rigRef} fitTarget={terrainMounted} distanceMultiplier={0.6} />
+        <CameraRig
+          ref={rigRef}
+          fitTarget={terrainMounted}
+          distanceMultiplier={0.6}
+          introStartedRef={introStartedRef}
+        />
 
         {/* Scale the terrain uniformly by WORLD_SCALE so the cubes keep cube proportions while the
             spread-out objects stay on solid ground. Vertical steps grow with the world, but the

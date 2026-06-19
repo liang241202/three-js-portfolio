@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Quaternion, Vector3 } from "three";
 import type { DraggingRef, PivotRef } from "./types";
@@ -8,7 +8,13 @@ import type { DraggingRef, PivotRef } from "./types";
 const R_HOLD_MS = 2000;
 const PROGRESS_STEP = 0.02; // 50 frames at 60fps ~= 0.83s ease
 
-export function useResetView(pivotRef: PivotRef, draggingRef?: DraggingRef) {
+// `introStartedRef` (optional) gates the window-level R-hold reset while the intro gate is still up —
+// the orbit/pan/zoom hooks bind to the canvas and are already blocked by the overlay, but R is global.
+export function useResetView(
+  pivotRef: PivotRef,
+  draggingRef?: DraggingRef,
+  introStartedRef?: RefObject<boolean>,
+) {
   const state = useRef({
     rHeld: false,
     rPressedAt: 0,
@@ -23,6 +29,7 @@ export function useResetView(pivotRef: PivotRef, draggingRef?: DraggingRef) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "r" && e.key !== "R") return;
+      if (introStartedRef && !introStartedRef.current) return; // intro gate up: ignore R
       if (!state.current.rHeld) {
         state.current.rHeld = true;
         state.current.rPressedAt = performance.now();
@@ -38,7 +45,7 @@ export function useResetView(pivotRef: PivotRef, draggingRef?: DraggingRef) {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, []);
+  }, [introStartedRef]); // stable ref; listed to satisfy exhaustive-deps without re-subscribing
 
   useFrame(() => {
     const pivot = pivotRef.current;
