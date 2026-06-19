@@ -6,10 +6,11 @@ type Props = {
 };
 
 // First-impression intro gate. A screen-fixed DOM sibling of the Canvas (like the other overlays).
-// While the scene renders behind it as glowing cyan edges (EdgeReveal), this black panel holds the
-// ENTER button and frames the opening shot — it captures pointer events so the camera can't be orbited
-// before START. Pressing ENTER eases the colour flood; the gate then fades out and goes
-// pointer-events-none so it never swallows clicks meant for the live scene.
+// While the scene renders behind it as glowing violet edges (EdgeReveal), this panel holds the ENTER
+// button and frames the opening shot — it captures pointer events so the camera can't be orbited
+// before START. Pressing ENTER eases the colour flood; the gate then fades out, goes pointer-events-none
+// and disables the button (removing it from the tab order under aria-hidden) so it neither swallows
+// clicks nor traps keyboard focus in the live scene.
 export default function IntroGate({ started, onStart }: Props) {
   return (
     <div
@@ -37,6 +38,7 @@ export default function IntroGate({ started, onStart }: Props) {
         type="button"
         onClick={onStart}
         autoFocus
+        disabled={started}
         className="pointer-events-auto mt-12 rounded-full border border-[#9b7bff]/60 px-10 py-3 text-sm
           font-semibold uppercase tracking-[0.35em] text-[#d9ccff] transition-all duration-300
           hover:border-[#9b7bff] hover:bg-[#9b7bff]/10 hover:tracking-[0.45em]

@@ -103,7 +103,7 @@ export function useInteraction(characterRef: RefObject<Mesh | null>): UseInterac
 
   const activeCard = openCardId ? getPortfolioCard(openCardId) ?? null : null;
   const promptText =
-    !panelOpen && nearestObjectId
+    introStarted && !panelOpen && nearestObjectId
       ? getIslandObject(nearestObjectId)?.interaction.prompt ?? null
       : null;
 
