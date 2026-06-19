@@ -23,13 +23,13 @@ export default function IntroGate({ started, onStart }: Props) {
       aria-labelledby="intro-title"
       aria-hidden={started}
     >
-      <p className="mb-4 text-xs font-medium uppercase tracking-[0.5em] text-[#5fe9d6]/70">
+      <p className="mb-4 text-xs font-medium uppercase tracking-[0.5em] text-[#b9a3ff]/70">
         Interactive Portfolio
       </p>
       <h1
         id="intro-title"
-        className="px-6 text-center text-5xl font-semibold tracking-[0.18em] text-[#e8fffb] sm:text-7xl"
-        style={{ textShadow: "0 0 24px rgba(95,233,214,0.35)" }}
+        className="px-6 text-center text-5xl font-semibold tracking-[0.18em] text-[#f1ecff] sm:text-7xl"
+        style={{ textShadow: "0 0 24px rgba(155,123,255,0.4)" }}
       >
         FLOATING&nbsp;ISLAND
       </h1>
@@ -37,11 +37,11 @@ export default function IntroGate({ started, onStart }: Props) {
         type="button"
         onClick={onStart}
         autoFocus
-        className="pointer-events-auto mt-12 rounded-full border border-[#5fe9d6]/60 px-10 py-3 text-sm
-          font-semibold uppercase tracking-[0.35em] text-[#bafff5] transition-all duration-300
-          hover:border-[#5fe9d6] hover:bg-[#5fe9d6]/10 hover:tracking-[0.45em]
-          focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5fe9d6]"
-        style={{ boxShadow: "0 0 28px rgba(95,233,214,0.18), inset 0 0 18px rgba(95,233,214,0.06)" }}
+        className="pointer-events-auto mt-12 rounded-full border border-[#9b7bff]/60 px-10 py-3 text-sm
+          font-semibold uppercase tracking-[0.35em] text-[#d9ccff] transition-all duration-300
+          hover:border-[#9b7bff] hover:bg-[#9b7bff]/10 hover:tracking-[0.45em]
+          focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9b7bff]"
+        style={{ boxShadow: "0 0 28px rgba(155,123,255,0.2), inset 0 0 18px rgba(155,123,255,0.07)" }}
       >
         Enter
       </button>
