@@ -50,8 +50,11 @@ const fragment = /* glsl */ `
     d.x *= resolution.x / resolution.y; // aspect-correct so the bloom stays circular
     float dist = length(d);
     float band = 0.22;
-    float radius = mix(-band, 1.7, uProgress); // 1.7 > the farthest aspect-corrected corner, so full
+    float radius = mix(-band, 2.0, uProgress);
     float reveal = 1.0 - smoothstep(radius - band, radius + band, dist);
+    // Guarantee a clean pass-through at progress 1 regardless of aspect ratio — on a super-ultrawide
+    // the farthest corner can sit beyond radius-band and otherwise keep a faint edge tint forever.
+    reveal = max(reveal, step(1.0, uProgress));
 
     outputColor = vec4(mix(edgeView, inputColor.rgb, reveal), inputColor.a);
   }

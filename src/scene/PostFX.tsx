@@ -12,7 +12,7 @@ import EdgeReveal from "./EdgeRevealEffect";
 // Vignette frames the island, and ACES tone mapping is applied LAST so the glow is mapped to screen
 // correctly. Mounted last in the Canvas so it post-processes the whole frame.
 //
-// EdgeReveal runs FIRST: during the intro it converts the frame into glowing cyan edges (which then
+// EdgeReveal runs FIRST: during the intro it converts the frame into glowing violet edges (which then
 // bloom); once START is pressed it eases to a pass-through, so the rest of the chain is untouched.
 export default function PostFX({ introStartedRef }: { introStartedRef: RefObject<boolean> }) {
   return (
