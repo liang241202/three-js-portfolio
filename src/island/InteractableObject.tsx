@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { Float } from "@react-three/drei";
 import type { IslandObject } from "@/src/island/types";
-import { TEMPLE_BASE } from "@/src/island/templeBase";
+import { TEMPLE_BASE, TEMPLE_PILLARS } from "@/src/island/templeBase";
 
 type Props = {
   object: IslandObject;
@@ -139,10 +139,10 @@ function renderBlockout(object: IslandObject): JSX.Element {
             <boxGeometry args={[0.9, 0.06, 0.9]} />
             <meshStandardMaterial color="#2a2333" emissive="#9b7bff" emissiveIntensity={1.4} />
           </mesh>
-          {([-0.6, 0.6] as const).map((x) =>
-            ([-0.6, 0.6] as const).map((z) => (
-              <mesh key={`pillar-${x}-${z}`} position={[x, 0.85, z]} castShadow>
-                <boxGeometry args={[0.22, 1.1, 0.22]} />
+          {([-TEMPLE_PILLARS.offset, TEMPLE_PILLARS.offset] as const).map((x) =>
+            ([-TEMPLE_PILLARS.offset, TEMPLE_PILLARS.offset] as const).map((z) => (
+              <mesh key={`pillar-${x}-${z}`} position={[x, TEMPLE_PILLARS.localY, z]} castShadow>
+                <boxGeometry args={[TEMPLE_PILLARS.half * 2, TEMPLE_PILLARS.height, TEMPLE_PILLARS.half * 2]} />
                 <meshStandardMaterial color={c} />
               </mesh>
             )),

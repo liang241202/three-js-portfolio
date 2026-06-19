@@ -1,5 +1,6 @@
 import type { IslandObject } from "@/src/island/types";
-import { islandObjects } from "@/src/island/data/objects";
+import { getIslandObject, islandObjects } from "@/src/island/data/objects";
+import { TEMPLE_PILLARS } from "@/src/island/templeBase";
 
 // Shared collision footprint math so movement (useWASD) and teleport landing (travel.ts) agree on
 // where an object's solid surface is. They were computed independently before, which let a teleport
@@ -38,11 +39,33 @@ function objectCollider(o: IslandObject): Collider {
   return { round: false, x, z, hx: f.hx * sx, hz: f.hz * sz };
 }
 
-// Built once from the static registry. Movement and teleport landing both read this list. The temple
-// body is excluded — it is the walkable hub the Ball climbs onto via TempleFloorCollider.
-export const COLLIDERS: Collider[] = islandObjects
-  .filter((o) => o.id !== "center-temple")
-  .map(objectCollider);
+// The temple body is NOT a collider — it is the walkable hub the Ball climbs onto (TempleFloorCollider
+// raycasts its base top as the floor). Its four corner pillars ARE solid, so the Ball can stand on the
+// base and weave between them but can't walk through them (handoff candidate 2, 2026-06-19). XZ-only,
+// like every collider here, so the pillars block at ground level and on top of the base alike.
+function templePillarColliders(): Collider[] {
+  const temple = getIslandObject("center-temple");
+  if (!temple) return [];
+  const s = temple.visual.scale?.[0] ?? 1;
+  const [tx, , tz] = temple.position;
+  const half = TEMPLE_PILLARS.half * s;
+  const off = TEMPLE_PILLARS.offset * s;
+  return [-1, 1].flatMap((sx) =>
+    [-1, 1].map((sz) => ({
+      round: false as const,
+      x: tx + sx * off,
+      z: tz + sz * off,
+      hx: half,
+      hz: half,
+    })),
+  );
+}
+
+// Built once from the static registry. Movement and teleport landing both read this list.
+export const COLLIDERS: Collider[] = [
+  ...islandObjects.filter((o) => o.id !== "center-temple").map(objectCollider),
+  ...templePillarColliders(),
+];
 
 // Push (x,z) out of any collider it has entered so the Ball rests against the solid surface (XZ only).
 // Box colliders use closest-point-on-AABB so corners and long edges block correctly; round colliders
