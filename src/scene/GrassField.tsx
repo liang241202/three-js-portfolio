@@ -59,7 +59,7 @@ export default function GrassField({ area, count }: Props) {
 
   // A few-segment blade so it can bend; pivot moved to the base (y=0) so sway rotates about the root.
   const geometry = useMemo(() => {
-    const g = new PlaneGeometry(0.06, BLADE_HEIGHT, 1, 3);
+    const g = new PlaneGeometry(0.08, BLADE_HEIGHT, 1, 3);
     g.translate(0, BLADE_HEIGHT / 2, 0);
     return g;
   }, []);
@@ -76,7 +76,7 @@ export default function GrassField({ area, count }: Props) {
     for (let k = 0; k < count; k++) {
       dummy.position.set((Math.random() - 0.5) * area, 0, (Math.random() - 0.5) * area);
       dummy.rotation.y = Math.random() * Math.PI;
-      dummy.scale.setScalar(0.6 + Math.random() * 0.5);
+      dummy.scale.setScalar(0.7 + Math.random() * 0.6);
       dummy.updateMatrix();
       mesh.setMatrixAt(k, dummy.matrix);
     }

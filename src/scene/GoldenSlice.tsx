@@ -32,7 +32,12 @@ function useNormalizedModel(url: string, targetHeight: number, keepName?: string
       // Keep the named set member AND its descendants; drop only its siblings. (A regex over
       // `_\d+$` over-matched group members like NormalTree_3_1/_2 and deleted the tree's geometry.)
       const keep = object.getObjectByName(keepName);
-      if (keep?.parent) {
+      if (!keep) {
+        // Silent fallback would render the WHOLE scattered set; surface a mistyped name in dev.
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(`GoldenSlice: GLB node "${keepName}" not found in ${url}; rendering whole set.`);
+        }
+      } else if (keep.parent) {
         [...keep.parent.children].forEach((c) => {
           if (c !== keep) c.removeFromParent();
         });
@@ -55,7 +60,7 @@ function useNormalizedModel(url: string, targetHeight: number, keepName?: string
     // base lands at the wrapper's y and x/z are centered on the wrapper origin.
     const offset: [number, number, number] = [-center.x, -box.min.y, -center.z];
     return { object, scale, offset };
-  }, [gltf, targetHeight, keepName]);
+  }, [gltf, url, targetHeight, keepName]);
 }
 
 function Model({
@@ -63,17 +68,19 @@ function Model({
   targetHeight,
   keepName,
   position,
+  rotationY = 0,
   extraScale = 1,
 }: {
   url: string;
   targetHeight: number;
   keepName?: string;
   position: [number, number, number];
+  rotationY?: number;
   extraScale?: number;
 }) {
   const { object, scale, offset } = useNormalizedModel(url, targetHeight, keepName);
   return (
-    <group position={position} scale={scale * extraScale}>
+    <group position={position} rotation={[0, rotationY, 0]} scale={scale * extraScale}>
       <group position={offset}>
         {/* `object` is a clone(true) of useGLTF's cached scene: the node wrappers are ours but the
             geometry/material are SHARED with the cache, so we deliberately do NOT dispose here
@@ -93,25 +100,31 @@ export default function GoldenSlice() {
     // (the camera Box3-fit and Ball raycast depend on that group's exact contents).
     <group scale={WORLD_SCALE}>
       <group position={CORNER_CENTER}>
-        {/* Soil pad over the cleared corner, just above the old cube tops (y=0) to avoid
-            z-fighting; opaque so no voxel shows through. Dark earth tone so the gaps between the
-            dense grass read as soil, not a bright plate (real textured terrain is a later lift).
+        {/* Backing pad over the cleared corner, just above the old cube tops (y=0) to avoid
+            z-fighting; opaque so no voxel shows through. Dark grass-green so any sliver between the
+            dense blades reads as shadowed grass, not soil (real textured terrain is a later lift).
             Kept flat (Ball floats correctly over it — see Ball.tsx hold-on-miss). */}
         <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[3.4, 3.4]} />
-          <meshStandardMaterial color="#2d3f29" roughness={0.98} metalness={0} />
+          <meshStandardMaterial color="#274a2b" roughness={0.98} metalness={0} />
         </mesh>
 
         <Suspense fallback={null}>
-          {/* Single rock (the set scatters if normalized whole) on the outer -X/-Z rim, dropped
-              below the surface so it reads as a floating-island cliff edge. */}
+          {/* Each Model keeps ONE set member (the whole set scatters if normalized together).
+              Different members + positions/rotations/scales make the corner read as a varied
+              vignette, not a tiled stamp. Rocks dropped below y=0 read as floating-island edges. */}
+          {/* Hero cliff on the outer -X/-Z rim. */}
           <Model url="/models/cliff.glb" targetHeight={3.0} keepName="Rock_1" position={[-1.5, -0.8, -1.5]} extraScale={1.3} />
-          {/* Hero tree (one of the 5 in the set), planted on the pad. */}
+          {/* Scattered boulder + small stone for ground variety. */}
+          <Model url="/models/cliff.glb" targetHeight={0.9} keepName="Rock_2" position={[1.1, 0, -0.9]} rotationY={1.2} />
+          <Model url="/models/cliff.glb" targetHeight={0.55} keepName="Rock_3" position={[-0.5, 0, 1.1]} rotationY={2.5} />
+          {/* Hero tree + a smaller second tree, different members, planted on the pad. */}
           <Model url="/models/tree.glb" targetHeight={2.6} keepName="NormalTree_3" position={[0.5, 0, 0.6]} />
+          <Model url="/models/tree.glb" targetHeight={1.7} keepName="NormalTree_1" position={[-1.0, 0, 0.9]} rotationY={2.0} />
         </Suspense>
 
-        {/* Dense enough to read as a grass field that hides most of the flat pad. */}
-        <GrassField area={3.2} count={1500} />
+        {/* Dense enough to fully hide the flat pad — area matches the pad so blades reach the edge. */}
+        <GrassField area={3.4} count={4500} />
       </group>
     </group>
   );
